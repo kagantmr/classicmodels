@@ -13,7 +13,7 @@ db = mysql.connector.connect(
 @app.route('/')
 def index():
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT productLine, textDescription FROM productlines")
+    cursor.execute("SELECT productLine, textDescription FROM productlines LIMIT 2")
     productlines = cursor.fetchall()
     return render_template('index.html', productlines=productlines)
 
