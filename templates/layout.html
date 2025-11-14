@@ -25,13 +25,14 @@
           <li class="nav-item">
             <a class="nav-link">Products</a>
           </li>
-          {% if session.get('customer_number') %}
-          <!-- User is logged in -->
+          {% if session.get('user_number') %}
+          <li class="nav-item">
+              <a href="{{ url_for('my_profile') }}" class="nav-link">My Profile</a>
+          </li>
           <li class="nav-item">
               <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
           </li>
           {% else %}
-          <!-- User is not logged in -->
           <li class="nav-item">
               <a href="{{ url_for('login') }}" class="nav-link">Login</a>
           </li>

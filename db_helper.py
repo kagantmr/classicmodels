@@ -19,6 +19,21 @@ class DatabaseHandler:
         result = self.cursor.fetchone()
         return result
     
+    def check_employee_number(self,num):
+        """
+        check if the employee number exists in employee table
+        """
+        query = "SELECT * FROM employees WHERE employeeNumber = %s"
+        self.cursor.execute(query,(num,))
+        result = self.cursor.fetchone()
+        return result
+
+    def get_assigned_customers(self, employee_number):
+        """Fetches all customers assigned to a specific Sales Rep."""
+        query = "SELECT customerNumber, customerName, city, country FROM customers WHERE salesRepEmployeeNumber = %s"
+        self.cursor.execute(query, (employee_number,))
+        return self.cursor.fetchall()
+    
     def execute_query(self,query, params=None):
         """
         execute the given query
