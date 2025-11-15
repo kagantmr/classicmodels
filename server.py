@@ -3,6 +3,7 @@ from db_helper import DatabaseHandler
 import mysql.connector
 from os import getenv
 from dotenv import load_dotenv # Import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash   #Import generate_password_hash, check_password_hash to hashing
 
 load_dotenv() # Load variables from .env file at the top
 
@@ -229,6 +230,62 @@ def order_detail(order_number):
     order_items = db.get_order_details(order_number)
     payments = db.get_order_payments(order_number)
     return render_template("order_detail.html", order=order, items=order_items, payments=payments)
+
+
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
+    
+    if "user_type" not in session:   #Prevent unauthorized access
+        flash("You need to log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        old_password = request.form.get("old_password")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+
+        if not old_password or not new_password or not confirm_password:
+            flash("Please fill in all fields.", "danger")
+            return redirect(url_for("change_password"))
+
+        if new_password != confirm_password:
+            flash("New passwords do not match!", "danger")
+            return redirect(url_for("change_password"))
+
+        user_type = session["user_type"]
+        user_number = session["user_number"]
+
+        
+        if user_type == "customer":
+            user = db.check_customer_credentials(user_number, old_password)
+        else:
+            user = db.check_employee_credentials(user_number, old_password)
+
+        if not user:
+            flash("Old password is incorrect!", "danger")
+            return redirect(url_for("change_password"))
+
+        # Hash the new password
+        hashed_pw = generate_password_hash(new_password)
+
+        # UPDATE DB
+        if user_type == "customer":
+            db.execute_query(
+                "UPDATE customer_auth SET hashedPassword = %s WHERE customerNumber = %s",
+                (hashed_pw, user_number)
+            )
+        else:
+            db.execute_query(
+                "UPDATE employee_auth SET hashedPassword = %s WHERE employeeNumber = %s",
+                (hashed_pw, user_number)
+            )
+
+        # Logout and redirection
+        session.clear()
+        flash("Password changed successfully! Please log in again.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("change_password.html")
 
 
 if __name__ == '__main__':

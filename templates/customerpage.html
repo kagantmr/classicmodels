@@ -34,10 +34,22 @@
             </div>
         </div>
     </div>
+
+    <!-- Change Password Section -->
+    <div class="card shadow-sm mt-4 mb-5">
+        <div class="card-header">
+            <h5 class="mb-0">Account Settings</h5>
+        </div>
+        <div class="card-body">
+            <p>You can change your password from here.</p>
+            <a href="{{ url_for('change_password') }}" class="btn btn-warning">
+                Change Password
+            </a>
+        </div>
+    </div>
+
 {% else %}
     <div class="alert alert-warning">Could not load customer profile.</div>
 {% endif %}
-
-<!-- The Order History section has been moved to customer_orders.html -->
 
 {% endblock %}
