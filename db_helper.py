@@ -78,11 +78,6 @@ class DatabaseHandler:
         except mysql.connector.Error as err:
             print(f"Error: {err}")
             return None
-    
-    def close(self):
-        self.cursor.close()
-        self.db.close()
-
 
     def get_order(self, order_number):
         query = "SELECT * FROM orders WHERE orderNumber = %s"
@@ -106,4 +101,9 @@ class DatabaseHandler:
             WHERE o.orderNumber = %s
         """
         return self.execute_query(query, (order_number,))
+    
+    def close(self):
+        self.cursor.close()
+        self.db.close()
+
 
