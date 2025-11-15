@@ -9,7 +9,11 @@
   <tbody>
     {% for it in items %}
     <tr>
-      <td>{{ it.productName }}</td>
+      <td>
+        <a href="{{ url_for('product_page', product_code=it.productCode) }}">
+          {{ it.productName }}
+        </a>
+      </td>
       <td>{{ it.quantityOrdered }}</td>
       <td>{{ "%.2f"|format(it.priceEach) }}</td>
       <td>{{ "%.2f"|format(it.quantityOrdered * it.priceEach) }}</td>

@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ product.productName }}</h2>
+<p><strong>Product Line:</strong> {{ product.productLine }}</p>
+<p><strong>Scale:</strong> {{ product.productScale }}</p>
+<p><strong>Vendor:</strong> {{ product.productVendor }}</p>
+<p><strong>Description:</strong></p>
+<p>{{ product.productDescription }}</p>
+<p><strong>MSRP:</strong> ${{ "%.2f"|format(product.MSRP) }}</p>
+{% if session.get('user_type') == 'employee' %}
+  <p class="text-muted">Buy Price: ${{ "%.2f"|format(product.buyPrice) }}</p>
+  <p class="text-muted">Stock: {{ product.quantityInStock }}</p>
+{% endif %}
+
+{% endblock %}
