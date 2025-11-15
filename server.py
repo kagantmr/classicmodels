@@ -38,28 +38,36 @@ def products_by_line(product_line):
 # page for the single product
 @app.route("/product/<product_code>")
 def product_page(product_code):
-    product = db.get_single_product(product_code)[0]
-    #print(product)
-
+    # FIX: db.get_single_product now uses fetchone, so no [0] needed.
+    product = db.get_single_product(product_code)
+    
     if not product:
         return "Product not found", 404
     
     return render_template("product.html", product=product)
 
+# UPDATED: Full /login route
 @app.route("/login",methods=["GET","POST"])
 def login():
     if request.method == "POST":
         number_input = request.form.get("number")
-        user_type = request.form.get("user_type") # Get the user type from hidden input
+        password_input = request.form.get("password") # NEW: Get password
+        user_type = request.form.get("user_type") 
 
         if not number_input.isdigit():
             flash("Please enter a valid number!", "danger")
+            return redirect(url_for("login"))
+        
+        if not password_input: # Check for empty password
+            flash("Password is required.", "danger")
             return redirect(url_for("login"))
 
         number_input = int(number_input)
         
         if user_type == "customer":
-            customer = db.check_customer_number(number_input)
+            # UPDATED: Use new credentials check function
+            customer = db.check_customer_credentials(number_input, password_input)
+            
             if customer:
                 # store customer info in session
                 session["user_type"] = "customer"
@@ -68,10 +76,13 @@ def login():
                 flash("Login successful as Customer!", "success")
                 return redirect(url_for('index')) # Redirect to home
             else:
-                flash("Customer number not found!", "danger")
+                # Secure message:
+                flash("Invalid customer number or password.", "danger")
 
         elif user_type == "employee":
-            employee = db.check_employee_number(number_input)
+            # UPDATED: Use new credentials check function
+            employee = db.check_employee_credentials(number_input, password_input)
+            
             if employee:
                 session["user_type"] = "employee"
                 session["user_number"] = employee["employeeNumber"]
@@ -79,13 +90,16 @@ def login():
                 flash(f"Login successful as Employee: {employee['jobTitle']}!", "info")
                 return redirect(url_for('index')) # Redirect to home
             else:
-                flash("Employee number not found!", "danger")
+                # Secure message:
+                flash("Invalid employee number or password.", "danger")
         
         else:
             flash("Invalid login attempt.", "danger")
 
+        # If login fails, redirect back to login
         return redirect(url_for("login"))
     
+    # Handle GET request
     return render_template("login.html")
 
 @app.route("/logout")
@@ -115,7 +129,10 @@ def employee_view_customer_orders(customer_num):
         return redirect(url_for("login"))
 
     # Security check: Verify this employee is assigned to this customer
-    my_customers = db.get_assigned_customers(session.get("user_number"))
+    # Note: db.get_assigned_customers might return None on error
+    my_customers_data = db.get_assigned_customers(session.get("user_number"))
+    my_customers = my_customers_data if my_customers_data is not None else []
+    
     if not any(c['customerNumber'] == customer_num for c in my_customers):
          flash("You are not authorized to view this customer.", "warning")
          return redirect(url_for("employee_dashboard"))
@@ -189,15 +206,25 @@ def order_detail(order_number):
         flash("Order not found.", "danger")
         return redirect(url_for("index"))
 
-    # If customer: ensure owns the order
-    if session.get("user_type") == "customer":
-        if order["customerNumber"] != session.get("user_number"):
-            flash("Access denied.", "danger")
+    user_type = session.get("user_type")
+    user_number = session.get("user_number")
+
+    if user_type == "customer":
+        if order["customerNumber"] != user_number:
+            flash("Access denied. This is not your order.", "danger")
             return redirect(url_for("index"))
 
-    # If employee: optionally verify assignment
-    if session.get("user_type") == "employee":
-        pass
+    elif user_type == "employee":
+        # SECURITY UPDATE: Check if employee is assigned to this order's customer
+        customer_of_order = db.get_customer_details(order["customerNumber"])
+        if not customer_of_order or customer_of_order.get("salesRepEmployeeNumber") != user_number:
+            flash("Access denied. You are not the sales rep for this order's customer.", "danger")
+            return redirect(url_for("employee_dashboard"))
+    
+    elif not user_type: # If not logged in at all
+        flash("You must be logged in to view order details.", "danger")
+        return redirect(url_for("login"))
+
 
     order_items = db.get_order_details(order_number)
     payments = db.get_order_payments(order_number)

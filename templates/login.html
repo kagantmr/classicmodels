@@ -18,38 +18,41 @@
             </ul>
         </div>
         <div class="card-body">
-            <!-- This flash message block is REMOVED, as it's now in layout.html -->
-            <!-- 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              ...
-            {% endwith %} 
-            -->
-            
             <div class="tab-content p-3" id="loginTabContent">
-                <!-- Customer Login Form -->
                 <div class="tab-pane fade show active" id="customer-pane" role="tabpanel" aria-labelledby="customer-tab" tabindex="0">
                     <h5 class="text-center mb-4">Customer Login</h5>
                     <form method="POST">
-                        <!-- Hidden input to identify the form -->
                         <input type="hidden" name="user_type" value="customer">
+                        
                         <div class="mb-3">
-                            <label for="customer_number" class="form-label">Enter your Customer Number</label>
+                            <label for="customer_number" class="form-label">Customer Number</label>
                             <input type="text" class="form-control" id="customer_number" name="number" placeholder="e.g., 123" required>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label for="customer_password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="customer_password" name="password" required>
+                        </div>
+                        
                         <button type="submit" class="btn btn-primary w-100">Login as Customer</button>
                     </form>
                 </div>
                 
-                <!-- Employee Login Form -->
                 <div class="tab-pane fade" id="employee-pane" role="tabpanel" aria-labelledby="employee-tab" tabindex="0">
                     <h5 class="text-center mb-4">Employee Login</h5>
                     <form method="POST">
-                        <!-- Hidden input to identify the form -->
                         <input type="hidden" name="user_type" value="employee">
+                        
                         <div class="mb-3">
-                            <label for="employee_number" class="form-label">Enter your Employee Number</label>
+                            <label for="employee_number" class="form-label">Employee Number</label>
                             <input type="text" class="form-control" id="employee_number" name="number" placeholder="e.g., 1234" required>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label for="employee_password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="employee_password" name="password" required>
+                        </div>
+                        
                         <button type="submit" class="btn btn-dark w-100">Login as Employee</button>
                     </form>
                 </div>
