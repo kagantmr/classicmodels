@@ -35,6 +35,16 @@ def products_by_line(product_line):
     products = db.execute_query(query, (product_line,))
     return render_template("products.html", products=products, product_line=product_line)
 
+# page for the single product
+@app.route("/product/<product_code>")
+def product_page(product_code):
+    product = db.get_single_product(product_code)[0]
+    #print(product)
+
+    if not product:
+        return "Product not found", 404
+    
+    return render_template("product.html", product=product)
 
 @app.route("/login",methods=["GET","POST"])
 def login():

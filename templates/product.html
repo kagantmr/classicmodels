@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ product.productName }}</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Product Line:</strong> {{ product.productLine }}</p>
+            <p><strong>Scale:</strong> {{ product.productScale }}</p>
+            <p><strong>Vendor:</strong> {{ product.productVendor }}</p>
+            <p><strong>Description:</strong> {{ product.productDescription }}</p>
+            <p class="text-muted"><strong>Stock:</strong> {{ product.quantityInStock }} pieces</p>
+            {% if session.get('user_type') == 'employee' %}
+                <p class="text-danger"><strong>Buy Price:</strong> ${{ product.buyPrice }}</p>
+                <p class="text-success"><strong>MSRP:</strong> ${{ product.MSRP }}</p>
+            {% else %}
+                <p><strong>Price:</strong> ${{ product.MSRP }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

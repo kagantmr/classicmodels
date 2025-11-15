@@ -102,6 +102,10 @@ class DatabaseHandler:
         """
         return self.execute_query(query, (order_number,))
     
+    def get_single_product(self, product_code):
+        query = "SELECT * FROM products WHERE productCode = %s"
+        return self.execute_query(query, (product_code,))
+    
     def close(self):
         self.cursor.close()
         self.db.close()

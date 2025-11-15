@@ -5,7 +5,7 @@
   {% for product in products %}
   <div class="col-md-4 mb-4">
     <div class="card h-100">
-      <div class="card-body">
+      <div class="card-body" role="button" onclick="window.location.href='/product/{{ product.productCode }}'">
         <h5 class="card-title">{{ product.productName }}</h5>
         <p class="card-text">Scale: {{ product.productScale }}</p>
         {% if session.get('user_type') == 'employee' %}
