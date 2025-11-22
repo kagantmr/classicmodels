@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS `employee_reports`;
+
 CREATE TABLE IF NOT EXISTS `employee_reports` (
   `reportId` int(11) NOT NULL AUTO_INCREMENT,
   `employeeNumber` int(11) NOT NULL,
