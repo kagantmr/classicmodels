@@ -252,6 +252,24 @@ class DatabaseHandler:
             # Restore autocommit to default state for subsequent operations
             self.db.autocommit = True
 
+    def update_customer_profile(self, customer_number, first_name, last_name, phone, address, city, country):
+        """
+        Updates the profile details of a customer.
+        """
+        query = """
+            UPDATE customers 
+            SET contactFirstName = %s, 
+                contactLastName = %s, 
+                phone = %s, 
+                addressLine1 = %s, 
+                city = %s, 
+                country = %s
+            WHERE customerNumber = %s
+        """
+        # Send datas as a tuples
+        params = (first_name, last_name, phone, address, city, country, customer_number)
+        return self.execute_query(query, params)
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()

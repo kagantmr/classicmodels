@@ -181,4 +181,40 @@ def init_customer_routes(app, database):
             else:
                 flash("An error occurred while deleting your account. Please contact support.", "danger")
                 return redirect(url_for("account_settings"))
+
+    
+    @app.route("/customer/update_profile", methods=["POST"])
+    def update_customer_profile_route():
+        if session.get("user_type") != "customer":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("login"))
+
+        customer_number = session.get("user_number")
+
+        # Take data from form
+        fname = request.form.get("contactFirstName", "").strip()
+        lname = request.form.get("contactLastName", "").strip()
+        phone = request.form.get("phone", "").strip()
+        address = request.form.get("addressLine1", "").strip()
+        city = request.form.get("city", "").strip()
+        country = request.form.get("country", "").strip()
+
+        # Validation for empty datas
+        if not fname or not lname or not phone or not address or not city or not country:
+            flash("All fields are required for profile update.", "warning")
+            return redirect(url_for("account_settings"))
+
+        # UPDATE database
+        try:
+            db.update_customer_profile(customer_number, fname, lname, phone, address, city, country)
+            
+            # Updates on Session
+            session["user_name"] = fname
+            
+            flash("Profile updated successfully!", "success")
+        except Exception as e:
+            print(f"Update Error: {e}")
+            flash("An error occurred while updating your profile.", "danger")
+
+        return redirect(url_for("account_settings"))
             
