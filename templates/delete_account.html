@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">⚠ Permanent Account Deletion</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead text-danger">You are about to permanently delete your account.</p>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong> This action cannot be undone. 
+                        All your personal data, order history, and payment records will be erased immediately.
+                    </div>
+
+                    <form action="{{ url_for('delete_account') }}" method="POST">
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" name="password" required 
+                                   placeholder="Enter your password to confirm">
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" name="confirm_checkbox" id="confirmCheck" required>
+                            <label class="form-check-label small text-muted" for="confirmCheck">
+                                I understand that this action is irreversible and all my data will be lost.
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                 Permanently Delete My Account
+                            </button>
+                            <a href="{{ url_for('account_settings') }}" class="btn btn-outline-secondary">
+                                Cancel, Keep My Account
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -124,6 +124,61 @@ def init_customer_routes(app, database):
 
             except mysql.connector.Error as err:
                 flash("Something went wrong please try later")
-
-
+        
         return render_template("customer_signup.html")
+
+
+    @app.route("/delete-account", methods=["GET", "POST"])
+    def delete_account():
+        # Login check
+        if session.get("user_type") != "customer":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("login"))
+
+        customer_number = session.get("user_number")
+
+        # GET request
+        if request.method == "GET":
+            # Debt Control again for Security
+            balance_info = db.get_customer_balance(customer_number)
+            if balance_info and balance_info["balance"] > 0:
+                flash(f"Action Denied! You have an outstanding balance of ${balance_info['balance']}. Please pay first.", "danger")
+                return redirect(url_for("account_settings"))
+            
+            return render_template("delete_account.html")
+
+        # POST request
+        if request.method == "POST":
+            password_input = request.form.get("password")
+            checkbox = request.form.get("confirm_checkbox")
+
+            # Checkbox check
+            if not checkbox:
+                flash("You must check the confirmation box.", "warning")
+                return redirect(url_for("delete_account"))
+
+            # Password Check (use function from db_helper.py)
+            user = db.check_customer_credentials(customer_number, password_input)
+            
+            if not user:
+                flash("Incorrect password provided.", "danger")
+                return redirect(url_for("delete_account"))
+
+            # Debt check (for the last time)
+            balance_info = db.get_customer_balance(customer_number)
+            if balance_info and balance_info["balance"] > 0:
+                flash("Cannot delete account due to outstanding debt.", "danger")
+                return redirect(url_for("account_settings"))
+
+            # Deleting opertaion via Transaction
+            success = db.delete_customer_transaction(customer_number)
+
+            if success:
+                # Cleane session and logout
+                session.clear()
+                flash("Your account has been permanently deleted. We are sorry to see you go.", "info")
+                return redirect(url_for("login"))
+            else:
+                flash("An error occurred while deleting your account. Please contact support.", "danger")
+                return redirect(url_for("account_settings"))
+            

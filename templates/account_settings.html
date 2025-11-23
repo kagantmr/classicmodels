@@ -75,4 +75,41 @@
 
 </div>
 
+{% if user_type == 'customer' %}
+  <hr class="my-5">
+  
+  <div class="card border-danger mb-5">
+    <div class="card-header bg-danger text-white">
+      <strong>Danger Zone</strong>
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">Delete Account</h5>
+      <p class="card-text text-muted">
+        Permanently remove your Personal Data, Order History, and Account Information from our servers. 
+        <br><strong>Warning:</strong> This action is not reversible.
+      </p>
+      
+      <button onclick="handleDeleteRequest({{ balance if balance else 0 }})" class="btn btn-outline-danger">
+        Delete My Account
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function handleDeleteRequest(currentBalance) {
+      // 1. Debt Check (Client-Side Check)
+      if (currentBalance > 0) {
+        alert("Action Denied:\n\nYou currently have an outstanding balance of $" + currentBalance.toFixed(2) + ".\n\nYou must settle your debt before deleting your account.");
+        return; // Stop operation
+      }
+
+      // 2. First warning (Pop-up)
+      if (confirm("Are you really sure you want to delete your account?\n\nThis action will permanently erase all your data and cannot be undone.")) {
+        // 3. Redirect to delete_account_page to check password
+        window.location.href = "{{ url_for('delete_account') }}"; 
+      }
+    }
+  </script>
+{% endif %}
+
 {% endblock %}

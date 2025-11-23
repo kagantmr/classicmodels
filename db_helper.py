@@ -196,6 +196,62 @@ class DatabaseHandler:
         query = "INSERT INTO customer_auth (customerNumber, hashedPassword) VALUES(%s, %s)"
         return self.execute_query(query, customer_info)
 
+    def delete_customer_transaction(self, customer_number):
+        """
+        Deletes a customer and all associated data (orders, payments, auth) atomically.
+        Manages autocommit manually to prevent 'Transaction already in progress' errors.
+        """
+        try:
+            # Ensure no unread results exist on the connection
+            if self.db.is_connected():
+                self.cursor.fetchall() 
+            
+            # Disable autocommit to start a manual transaction block
+            self.db.autocommit = False
+
+            # --- CASCADE DELETE OPERATIONS ---
+
+            # 1. Fetch customer's orders to target OrderDetails
+            query_get_orders = "SELECT orderNumber FROM orders WHERE customerNumber = %s"
+            self.cursor.execute(query_get_orders, (customer_number,))
+            orders = self.cursor.fetchall()
+
+            # 2. Delete OrderDetails for each order
+            if orders:
+                for order in orders:
+                    query_del_details = "DELETE FROM orderdetails WHERE orderNumber = %s"
+                    self.cursor.execute(query_del_details, (order['orderNumber'],))
+
+            # 3. Delete Orders
+            query_delete_orders = "DELETE FROM orders WHERE customerNumber = %s"
+            self.cursor.execute(query_delete_orders, (customer_number,))
+
+            # 4. Delete Payments
+            query_delete_payments = "DELETE FROM payments WHERE customerNumber = %s"
+            self.cursor.execute(query_delete_payments, (customer_number,))
+
+            # 5. Delete Customer Authentication (Password/Login)
+            query_delete_auth = "DELETE FROM customer_auth WHERE customerNumber = %s"
+            self.cursor.execute(query_delete_auth, (customer_number,))
+
+            # 6. Delete Customer Profile
+            query_delete_customer = "DELETE FROM customers WHERE customerNumber = %s"
+            self.cursor.execute(query_delete_customer, (customer_number,))
+
+            # --- COMMIT TRANSACTION ---
+            self.db.commit()
+            print(f"SUCCESS: Customer {customer_number} deleted completely.")
+            return True
+
+        except mysql.connector.Error as err:
+            print(f"Error deleting account: {err}")
+            self.db.rollback()
+            return False
+            
+        finally:
+            # Restore autocommit to default state for subsequent operations
+            self.db.autocommit = True
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()
