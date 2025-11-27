@@ -60,6 +60,65 @@ class DatabaseHandler:
         query = "SELECT * FROM offices ORDER BY country, city"
         return self.execute_query(query)
     
+    def insert_product(self, product_info):
+        """
+        Inserts a new product into the products table.
+
+        product_info: tuple in the order:
+        (
+            productCode, productName, productLine, productScale,
+            productVendor, productDescription,
+            quantityInStock, buyPrice, MSRP
+        )
+        """
+        query = """
+            INSERT INTO products (
+                productCode, productName, productLine, productScale,
+                productVendor, productDescription,
+                quantityInStock, buyPrice, MSRP
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        return self.execute_query(query, product_info)
+    
+
+    def update_product(self, product_code, product_name, product_line,
+                       product_scale, product_vendor, product_description,
+                       quantity_in_stock, buy_price, msrp):
+        """
+        Updates an existing product identified by productCode.
+        Returns the number of affected rows (0 if productCode doesn't exist).
+        """
+        query = """
+            UPDATE products
+            SET
+                productName = %s,
+                productLine = %s,
+                productScale = %s,
+                productVendor = %s,
+                productDescription = %s,
+                quantityInStock = %s,
+                buyPrice = %s,
+                MSRP = %s
+            WHERE productCode = %s
+        """
+        params = (
+            product_name, product_line, product_scale,
+            product_vendor, product_description,
+            quantity_in_stock, buy_price, msrp,
+            product_code
+        )
+        return self.execute_query(query, params)
+
+    
+    def delete_product(self, product_code):
+        """
+        Deletes a product by productCode.
+        Returns the number of affected rows (0 if productCode doesn't exist).
+        """
+        query = "DELETE FROM products WHERE productCode = %s"
+        return self.execute_query(query, (product_code,))
+    
     def execute_query(self, query, params=None, fetchone=False):
         """
         Executes a given query.

@@ -84,6 +84,15 @@
               href="{{ url_for('productlines') }}">Products</a>
           </li>
 
+          {% if session.get('user_type') == 'employee' %}
+          <li class="nav-item">
+            <a class="nav-link{% if request.endpoint in ['product_list', 'add_product', 'edit_product'] %} active{% endif %}"
+              href="{{ url_for('products_list') }}">
+              Manage Products
+            </a>
+          </li>
+          {% endif %}
+
           {% if session.get('user_type') == 'customer' %}
           <li class="nav-item">
             <a class="nav-link{% if request.endpoint == 'view_cart' %} active{% endif %}"

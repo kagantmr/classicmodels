@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Delete Product {{ product.productCode }}</h2>
+
+    <div class="alert alert-warning">
+        <p>Are you sure you want to delete the product <strong>{{ product.productName }}</strong>?</p>
+        <p>This action cannot be undone.</p>
+    </div>
+
+    <form method="POST">
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+        <a href="{{ url_for('products_list') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}

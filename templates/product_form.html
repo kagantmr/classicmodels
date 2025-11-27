@@ -1,0 +1,96 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    {% if mode == "edit" %}
+        <h2>Edit Product {{ product_code }}</h2>
+    {% else %}
+        <h2>Create New Product</h2>
+    {% endif %}
+
+    {% if errors %}
+      <div class="alert alert-danger">
+        <ul>
+          {% for e in errors %}
+            <li>{{ e }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="POST">
+        {% if mode == "create" %}
+        <div class="mb-3">
+            <label for="productCode" class="form-label">Product Code</label>
+            <input type="text" class="form-control" id="productCode" name="productCode"
+                   value="{{ form.productCode if form else '' }}" maxlength="15" required>
+        </div>
+        {% else %}
+        <div class="mb-3">
+            <label class="form-label">Product Code</label>
+            <input type="text" class="form-control" value="{{ product_code }}" disabled>
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label for="productName" class="form-label">Product Name</label>
+            <input type="text" class="form-control" id="productName" name="productName"
+                   value="{% if form %}{{ form.productName }}{% elif product %}{{ product.productName }}{% endif %}"
+                   maxlength="70" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="productLine" class="form-label">Product Line</label>
+            <input type="text" class="form-control" id="productLine" name="productLine"
+                   value="{% if form %}{{ form.productLine }}{% elif product %}{{ product.productLine }}{% endif %}"
+                   maxlength="50" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="productScale" class="form-label">Product Scale</label>
+            <input type="text" class="form-control" id="productScale" name="productScale"
+                   value="{% if form %}{{ form.productScale }}{% elif product %}{{ product.productScale }}{% endif %}"
+                   maxlength="10" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="productVendor" class="form-label">Product Vendor</label>
+            <input type="text" class="form-control" id="productVendor" name="productVendor"
+                   value="{% if form %}{{ form.productVendor }}{% elif product %}{{ product.productVendor }}{% endif %}"
+                   maxlength="50" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="productDescription" class="form-label">Product Description</label>
+            <textarea class="form-control" id="productDescription" name="productDescription" rows="4" required>{% if form %}{{ form.productDescription }}{% elif product %}{{ product.productDescription }}{% endif %}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="quantityInStock" class="form-label">Quantity In Stock</label>
+            <input type="number" class="form-control" id="quantityInStock" name="quantityInStock" min="0"
+                   value="{% if form %}{{ form.quantityInStock }}{% elif product %}{{ product.quantityInStock }}{% endif %}"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label for="buyPrice" class="form-label">Buy Price</label>
+            <input type="number" step="0.01" class="form-control" id="buyPrice" name="buyPrice" min="0"
+                   value="{% if form %}{{ form.buyPrice }}{% elif product %}{{ product.buyPrice }}{% endif %}"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label for="MSRP" class="form-label">MSRP</label>
+            <input type="number" step="0.01" class="form-control" id="MSRP" name="MSRP" min="0"
+                   value="{% if form %}{{ form.MSRP }}{% elif product %}{{ product.MSRP }}{% endif %}"
+                   required>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            {% if mode == "edit" %}Save Changes{% else %}Create Product{% endif %}
+        </button>
+        <a href="{{ url_for('products_list') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}
