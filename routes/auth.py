@@ -45,7 +45,10 @@ def init_auth_routes(app, database):
                     session["user_type"] = "employee"
                     session["user_number"] = employee["employeeNumber"]
                     session["user_name"] = employee["firstName"]
-                    flash(f"Login successful as Employee: {employee['jobTitle']}!", "info")
+                    # JobTitle data inserting to session!
+                    session["job_title"] = employee["jobTitle"] 
+                    
+                    flash(f"Login successful as {employee['jobTitle']}!", "info")
                     return redirect(url_for('index'))
                 else:
                     flash("Invalid employee number or password.", "danger")

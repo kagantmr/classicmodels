@@ -399,6 +399,76 @@ class DatabaseHandler:
         params = (first_name, last_name, phone, address, city, country, customer_number)
         return self.execute_query(query, params)
 
+    def get_all_offices(self):
+        """
+        Fetches all offices. 
+        UPDATED: Now includes the count of employees in each office.
+        """
+        query = """
+            SELECT o.*, 
+            (SELECT COUNT(*) FROM employees e WHERE e.officeCode = o.officeCode) as employee_count
+            FROM offices o
+            ORDER BY o.country, o.city
+        """
+        return self.execute_query(query)
+
+    def get_office_by_code(self, office_code):
+        """Fetches a single office by code."""
+        query = "SELECT * FROM offices WHERE officeCode = %s"
+        return self.execute_query(query, (office_code,), fetchone=True)
+
+    def insert_office(self, office_data):
+        """
+        Inserts a new office.
+        office_data tuple: (officeCode, city, phone, address1, address2, state, country, postalCode, territory)
+        """
+        query = """
+            INSERT INTO offices 
+            (officeCode, city, phone, addressLine1, addressLine2, state, country, postalCode, territory)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        return self.execute_query(query, office_data)
+
+    def update_office(self, office_code, phone, address1, address2, state, postal_code, territory):
+        """
+        Updates editable office details. 
+        Note: City and Country are typically fixed for an office location ID, 
+        but address/phone can change.
+        """
+        query = """
+            UPDATE offices 
+            SET phone = %s, 
+                addressLine1 = %s, 
+                addressLine2 = %s, 
+                state = %s, 
+                postalCode = %s, 
+                territory = %s
+            WHERE officeCode = %s
+        """
+        params = (phone, address1, address2, state, postal_code, territory, office_code)
+        return self.execute_query(query, params)
+
+    def delete_office(self, office_code):
+        """
+        Deletes an office ONLY IF it has no employees.
+        Returns: (Success: bool, Message: str)
+        """
+        # 1. Check for employees
+        check_query = "SELECT COUNT(*) as count FROM employees WHERE officeCode = %s"
+        result = self.execute_query(check_query, (office_code,), fetchone=True)
+        
+        if result and result['count'] > 0:
+            return False, f"Cannot delete office. It has {result['count']} employees assigned."
+
+        # 2. Delete if safe
+        del_query = "DELETE FROM offices WHERE officeCode = %s"
+        rows = self.execute_query(del_query, (office_code,))
+        
+        if rows:
+            return True, "Office deleted successfully."
+        else:
+            return False, "Error deleting office or office not found."
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()

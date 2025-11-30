@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container my-5">
-    <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg">
+    <div class="row p-4 pb-0 pe-lg-0 pt-lg-5 align-items-center rounded-3 border shadow-lg bg-white">
         <div class="col-lg-7 p-3 p-lg-5 pt-lg-3">
             <h1 class="display-4 fw-bold lh-1 text-body-emphasis">Welcome to ClassicModels</h1>
             <p class="lead">Your one-stop shop for the finest die-cast models and replicas. From classic cars to vintage
@@ -10,51 +10,84 @@
             <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4 mb-lg-3">
                 <a href="{{ url_for('productlines') }}" type="button"
                     class="btn btn-primary btn-lg px-4 me-md-2 fw-bold">Shop All Products</a>
+                {% if not session.get('user_number') %}
                 <a href="{{ url_for('login') }}" type="button" class="btn btn-outline-secondary btn-lg px-4">Login</a>
+                {% endif %}
             </div>
         </div>
         <div class="col-lg-4 offset-lg-1 p-0 overflow-hidden shadow-lg">
-            <!-- You can replace this placeholder with a cool image -->
             <img class="rounded-lg-3" src="https://placehold.co/600x400/343a40/ffffff?text=ClassicModels"
                 alt="Classic Model Car" width="720">
         </div>
     </div>
 </div>
 
-<!-- Office Locations Section Değiştirilebilir -->
 <div class="row mt-5">
-    <div class="col-12">
-        <h2 class="text-center mb-4">Our Global Offices</h2>
-        <div class="row justify-content-center">
-            {% for office in offices %}
-            <div class="col-md-4 col-lg-3 mb-4">
-                <div class="card h-100 text-center shadow-sm office-card" style="cursor: pointer;"
-                    onclick="toggleOfficeDetails('{{ office.officeCode }}')">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">{{ office.city }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">{{ office.country }}</h6>
-                        <div id="office-details-{{ office.officeCode }}" style="display: none;" class="mt-3 text-start">
-                            <hr>
-                            <p class="card-text small">
-                                <strong>Address:</strong><br>
-                                {{ office.addressLine1 }}<br>
-                                {% if office.addressLine2 %}{{ office.addressLine2 }}<br>{% endif %}
-                                {{ office.postalCode }}
-                            </p>
-                            <p class="card-text small">
-                                <strong>Phone:</strong> <a href="tel:{{ office.phone }}">{{ office.phone }}</a>
-                            </p>
+    <div class="col-12 d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-center mb-0">Our Global Offices</h2>
+        
+        {% if session.get('job_title') == 'President' %}
+        <a href="{{ url_for('add_office') }}" class="btn btn-success">
+            + Add New Office
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="row justify-content-center">
+        {% for office in offices %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 text-center shadow-sm office-card position-relative" 
+                 style="cursor: pointer; transition: all 0.3s;"
+                 onclick="toggleOfficeDetails('{{ office.officeCode }}')">
+                
+                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                    <h5 class="card-title text-primary fw-bold mb-1">{{ office.city }}</h5>
+                    <h6 class="card-subtitle mb-3 text-muted">{{ office.country }}</h6>
+                    
+                    {% if session.get('job_title') == 'President' %}
+                    <div class="mb-3">
+                        <span class="badge rounded-pill bg-light text-dark border shadow-sm px-3 py-2">
+                            👤 Employees: <span class="fw-bold text-primary">{{ office.employee_count }}</span>
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <div id="office-details-{{ office.officeCode }}" style="display: none; width: 100%;" class="mt-2 text-start border-top pt-3 bg-light rounded p-2">
+                        <p class="card-text small mb-1">
+                            <strong>Address:</strong><br>
+                            {{ office.addressLine1 }}<br>
+                            {% if office.addressLine2 %}{{ office.addressLine2 }}<br>{% endif %}
+                            {{ office.postalCode }}
+                        </p>
+                        <p class="card-text small mb-2">
+                            <strong>Phone:</strong> <a href="tel:{{ office.phone }}" class="text-decoration-none">{{ office.phone }}</a>
+                        </p>
+
+                        {% if session.get('job_title') == 'President' %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-center mt-3">
+                            <a href="{{ url_for('edit_office', office_code=office.officeCode) }}" class="btn btn-sm btn-outline-warning w-100">Edit</a>
+                            
+                            <form action="{{ url_for('delete_office_route', office_code=office.officeCode) }}" method="POST"
+                                  onsubmit="return confirm('Are you sure you want to delete the {{ office.city }} office?');" class="w-100">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Delete</button>
+                            </form>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
 </div>
 
 <script>
     function toggleOfficeDetails(officeCode) {
+        // Prevent toggling when clicking buttons directly
+        if (event.target.tagName === 'A' || event.target.tagName === 'BUTTON') {
+            return;
+        }
+        
         var detailsDiv = document.getElementById('office-details-' + officeCode);
         if (detailsDiv.style.display === "none") {
             detailsDiv.style.display = "block";
@@ -63,5 +96,4 @@
         }
     }
 </script>
-</div>
 {% endblock %}

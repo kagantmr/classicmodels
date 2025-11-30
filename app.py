@@ -11,6 +11,7 @@ from routes.orders import init_order_routes
 from routes.customer import init_customer_routes
 from routes.employee import init_employee_routes
 from routes.products import init_product_routes
+from routes.offices import init_office_routes
 
 load_dotenv()
 
@@ -33,6 +34,7 @@ init_order_routes(app, db)
 init_customer_routes(app, db)
 init_employee_routes(app, db)
 init_product_routes(app, db)
+init_office_routes(app, db)
 
 if __name__ == '__main__':
     app.run(debug=True)
