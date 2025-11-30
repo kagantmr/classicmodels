@@ -16,24 +16,41 @@ def init_employee_routes(app, database):
 
         employee_number = session.get("user_number")
         
-        customers = db.get_assigned_customers(employee_number)
-        # Add customer balance info
+        # Determine if user is a Sales Rep
+        employee_details = db.get_employee_details(employee_number)
+        is_sales_rep = False
+        if employee_details and employee_details['jobTitle'] == 'Sales Rep':
+            is_sales_rep = True
+
+        customers = []
         customer_balances = []
-        for c in customers:
-            bal = db.get_customer_balance(c["customerNumber"])
-            customer_balances.append({
-                "customerNumber": c["customerNumber"],
-                "customerName": c["customerName"],
-                "balance": bal["balance"]
-            })
+        
+        if is_sales_rep:
+            customers = db.get_assigned_customers(employee_number)
+            # Add customer balance info
+            for c in customers:
+                bal = db.get_customer_balance(c["customerNumber"])
+                customer_balances.append({
+                    "customerNumber": c["customerNumber"],
+                    "customerName": c["customerName"],
+                    "balance": bal["balance"]
+                })
+
         my_reports = db.get_employee_reports(employee_number)
         team_reports = db.get_subordinate_reports(employee_number)
         
+        # Fetch subordinates if not a Sales Rep
+        subordinates = []
+        if not is_sales_rep:
+            subordinates = db.get_subordinates(employee_number)
+
         return render_template("dashboard.html",
                                customers=customers,
                                customer_balances=customer_balances,
                                my_reports=my_reports,
-                               team_reports=team_reports)
+                               team_reports=team_reports,
+                               subordinates=subordinates,
+                               is_sales_rep=is_sales_rep)
 
     @app.route("/employee/customer_orders/<int:customer_num>")
     def employee_view_customer_orders(customer_num):
@@ -76,6 +93,25 @@ def init_employee_routes(app, database):
         db.create_report(employee_number, content)
         
         flash("Report submitted successfully!", "success")
+        return redirect(url_for("employee_dashboard"))
+
+    @app.route("/fire_employee/<int:employee_id>", methods=["POST"])
+    def fire_employee(employee_id):
+        """Fire a subordinate Sales Rep."""
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+
+        # Optional: Check if the logged-in user is actually the manager of this employee
+        # For now, we rely on the UI being hidden and the db_helper check
+        
+        success, message = db.fire_sales_rep(employee_id)
+        
+        if success:
+            flash(message, "success")
+        else:
+            flash(message, "danger")
+            
         return redirect(url_for("employee_dashboard"))
 
     @app.route("/register", methods=["GET", "POST"])

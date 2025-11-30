@@ -4,6 +4,7 @@
 
 <p class="lead">Welcome, {{ session.get("user_name") }}! (Employee #{{ session.get('user_number') }})</p>
 
+{% if is_sales_rep %}
 <h3>Your Assigned Customers</h3>
 
 {% if customers %}
@@ -18,13 +19,13 @@
         <div class="text-end">
             <span class="badge bg-primary rounded-pill mb-1">Customer #: {{ customer.customerNumber }}</span><br>
             {% for bal in customer_balances %}
-                {% if bal.customerNumber == customer.customerNumber %}
-                    {% if bal.balance > 0 %}
-                        <span class="badge bg-danger">Debt: ${{ "%.2f"|format(bal.balance) }}</span>
-                    {% else %}
-                        <span class="badge bg-success">No Debt</span>
-                    {% endif %}
-                {% endif %}
+            {% if bal.customerNumber == customer.customerNumber %}
+            {% if bal.balance > 0 %}
+            <span class="badge bg-danger">Debt: ${{ "%.2f"|format(bal.balance) }}</span>
+            {% else %}
+            <span class="badge bg-success">No Debt</span>
+            {% endif %}
+            {% endif %}
             {% endfor %}
         </div>
     </a>
@@ -35,6 +36,7 @@
 {% endif %}
 
 <hr class="my-5">
+{% endif %}
 
 <div class="row">
     <!-- Submit Report Section -->
@@ -108,6 +110,50 @@
                         <td>{{ report.jobTitle }}</td>
                         <td>{{ report.reportDate }}</td>
                         <td>{{ report.reportContent }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Subordinates Section (Hidden for Sales Reps) -->
+{% if subordinates %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">My Subordinates</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Job Title</th>
+                        <th>Office</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subordinates %}
+                    <tr>
+                        <td>{{ sub.firstName }} {{ sub.lastName }}</td>
+                        <td>{{ sub.employeeNumber }}</td>
+                        <td>{{ sub.email }}</td>
+                        <td>{{ sub.jobTitle }}</td>
+                        <td>{{ sub.city }}</td>
+                        <td>
+                            {% if sub.jobTitle == 'Sales Rep' %}
+                            <form action="{{ url_for('fire_employee', employee_id=sub.employeeNumber) }}" method="POST"
+                                onsubmit="return confirm('Are you sure you want to fire {{ sub.firstName }}? This cannot be undone.');">
+                                <button type="submit" class="btn btn-danger btn-sm">Fire</button>
+                            </form>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

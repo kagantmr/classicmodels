@@ -233,6 +233,22 @@ class DatabaseHandler:
             ORDER BY r.reportDate DESC
         """
         return self.execute_query(query, (manager_number,))
+
+    def get_employee_details(self, employee_number):
+        """Fetches full details for a specific employee."""
+        query = "SELECT * FROM employees WHERE employeeNumber = %s"
+        return self.execute_query(query, (employee_number,), fetchone=True)
+
+    def get_subordinates(self, manager_number):
+        """Fetches all employees who report to the given manager, including office city."""
+        query = """
+            SELECT e.employeeNumber, e.firstName, e.lastName, e.email, e.jobTitle, o.city
+            FROM employees e
+            JOIN offices o ON e.officeCode = o.officeCode
+            WHERE e.reportsTo = %s
+            ORDER BY e.lastName, e.firstName
+        """
+        return self.execute_query(query, (manager_number,))
     
     def insert_customer(self, customer_info):
         """
@@ -254,6 +270,60 @@ class DatabaseHandler:
         """
         query = "INSERT INTO customer_auth (customerNumber, hashedPassword) VALUES(%s, %s)"
         return self.execute_query(query, customer_info)
+
+    def fire_sales_rep(self, employee_id):
+        """
+        Fires a Sales Rep and reassigns their customers to another Rep in the same office.
+        Returns (Success: bool, Message: str).
+        """
+        try:
+            # 1. Validate Employee
+            emp = self.get_employee_details(employee_id)
+            if not emp:
+                return False, "Employee not found."
+            if emp['jobTitle'] != 'Sales Rep':
+                return False, "Cannot fire: Employee is not a Sales Rep."
+
+            office_code = emp['officeCode']
+
+            # 2. Find replacement Reps in the same office
+            query_others = """
+                SELECT employeeNumber FROM employees 
+                WHERE jobTitle = 'Sales Rep' 
+                AND officeCode = %s 
+                AND employeeNumber != %s
+            """
+            others = self.execute_query(query_others, (office_code, employee_id))
+            
+            if not others:
+                return False, "Cannot fire: Only one Sales Rep in this office."
+
+            # Pick the first available replacement
+            new_rep_id = others[0]['employeeNumber']
+
+            # 3. Start Transaction
+            if self.db.is_connected():
+                self.cursor.fetchall() # Clear any unread results
+            self.db.autocommit = False
+
+            # 4. Reassign Customers
+            query_reassign = "UPDATE customers SET salesRepEmployeeNumber = %s WHERE salesRepEmployeeNumber = %s"
+            self.cursor.execute(query_reassign, (new_rep_id, employee_id))
+
+            # 5. Delete Employee Records
+            self.cursor.execute("DELETE FROM employee_auth WHERE employeeNumber = %s", (employee_id,))
+            self.cursor.execute("DELETE FROM employee_reports WHERE employeeNumber = %s", (employee_id,))
+            self.cursor.execute("DELETE FROM employees WHERE employeeNumber = %s", (employee_id,))
+
+            self.db.commit()
+            return True, f"Employee fired. Customers reassigned to Rep #{new_rep_id}."
+
+        except mysql.connector.Error as err:
+            self.db.rollback()
+            print(f"Error firing employee: {err}")
+            return False, f"Database error: {err}"
+        finally:
+            self.db.autocommit = True
 
     def delete_customer_transaction(self, customer_number):
         """
