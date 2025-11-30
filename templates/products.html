@@ -1,6 +1,19 @@
 {% extends "layout.html" %}
 {% block content %}
 <h2 class="text-center mb-4">{{ product_line }}</h2>
+
+<!-- Sort dropdown -->
+<div class="d-flex justify-content-end mb-3">
+  <form method="get" id="sortForm">
+    <select name="sort" class="form-select w-auto" onchange="document.getElementById('sortForm').submit()">
+      <option value="" disabled selected>Sort by</option>
+      <option value="price_asc"  {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+      <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+      <option value="popular"    {% if sort == 'popular' %}selected{% endif %}>Most Popular</option>
+    </select>
+  </form>
+</div>
+
 <div class="row">
   {% for product in products %}
   <div class="col-md-4 mb-4">

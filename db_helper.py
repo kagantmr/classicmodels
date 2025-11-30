@@ -468,6 +468,17 @@ class DatabaseHandler:
             return True, "Office deleted successfully."
         else:
             return False, "Error deleting office or office not found."
+        
+    def sort_popular_products(self, product_line):
+        query = """
+                SELECT p.*, COALESCE(SUM(od.quantityOrdered),0) AS popularity
+                FROM products p
+                LEFT JOIN orderdetails od ON p.productCode = od.productCode
+                WHERE p.productLine = %s
+                GROUP BY p.productCode
+                ORDER BY popularity DESC;
+                    """
+        return self.execute_query(query,(product_line,))
 
     def close(self):
         """Closes the cursor and database connection."""

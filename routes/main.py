@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, session
+from flask import render_template, redirect, url_for, flash, session, request
 
 db = None
 
@@ -20,9 +20,21 @@ def init_main_routes(app, database):
 
     @app.route("/products/<product_line>")
     def products_by_line(product_line):
-        query = "SELECT * FROM products WHERE productLine = %s"
-        products = db.execute_query(query, (product_line,))
-        return render_template("products.html", products=products, product_line=product_line)
+        sort = request.args.get("sort")
+
+        if not sort or sort == "price_asc" or sort == "price_desc":
+            query = "SELECT * FROM products WHERE productLine = %s"
+            products = db.execute_query(query, (product_line,))
+            
+            if sort == "price_asc":
+                products = sorted(products, key=lambda x: x["MSRP"])
+            elif sort == "price_desc":
+                products = sorted(products, key=lambda x: x["MSRP"], reverse=True)
+
+        elif sort == "popular":
+            products = db.sort_popular_products(product_line)
+
+        return render_template("products.html", products=products, product_line=product_line,sort=sort)
 
     @app.route("/product/<product_code>")
     def product_page(product_code):
