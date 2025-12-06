@@ -47,17 +47,14 @@ def init_employee_routes(app, database):
         subordinates = []
         if is_manager:
             subordinates = db.get_subordinates(employee_number)
-            
 
-        # 4. PASS 'is_manager' TO THE TEMPLATE
         return render_template("dashboard.html",
                                customers=customers,
                                my_reports=my_reports,
                                team_reports=team_reports,
                                subordinates=subordinates,
-                               is_sales_rep=is_sales_rep,
-                               is_manager=is_manager)
-        
+                               is_sales_rep=is_sales_rep)
+
     @app.route("/employee/customer_orders/<int:customer_num>")
     def employee_view_customer_orders(customer_num):
         """View a customer's orders. Permissions vary by role."""
@@ -65,47 +62,41 @@ def init_employee_routes(app, database):
             flash("You must be an employee to view this page.", "danger")
             return redirect(url_for("login"))
 
-        employee_number = session.get("user_number")
+        my_customers_data = db.get_assigned_customers(session.get("user_number"))
+        my_customers = my_customers_data if my_customers_data is not None else []
         
-        # 1. Fetch Employee Details to check Role
-        emp = db.get_employee_details(employee_number)
-        if not emp:
-            flash("Employee record not found.", "danger")
-            return redirect(url_for("index"))
+        if not any(c['customerNumber'] == customer_num for c in my_customers):
+            flash("You are not authorized to view this customer.", "warning")
+            return redirect(url_for("employee_dashboard"))
 
-        # Define "Management" (Presidents, VPs, Managers) vs "Sales Reps"
-        is_sales_rep = (emp['jobTitle'] == 'Sales Rep')
-        is_manager = not is_sales_rep
-
-        # 2. Access Control
-        if is_sales_rep:
-            # Sales Reps: STRICT check (must be assigned to them)
-            my_customers_data = db.get_assigned_customers(employee_number)
-            my_customers = my_customers_data if my_customers_data is not None else []
-            
-            if not any(c['customerNumber'] == customer_num for c in my_customers):
-                flash("You are not authorized to view this customer.", "warning")
-                return redirect(url_for("employee_dashboard"))
-        
-        # Managers: NO CHECK (They bypass ownership rules)
-
-        # 3. Fetch Data
         details = db.get_customer_details(customer_num)
         orders = db.get_customer_orders(customer_num)
         balance = db.get_customer_balance(customer_num)
-        
-        # 4. Payment Visibility
-        # Only Managers can see payments
-        payments = []
-        if is_manager:
-            payments = db.get_customer_payments(customer_num)
+        payments = db.get_customer_payments(customer_num)
 
         return render_template("employee_customer_orders.html",
                                customer=details,
                                orders=orders,
                                balance=balance,
-                               payments=payments,
-                               is_manager=is_manager)
+                               payments=payments)
+
+    @app.route("/create_report", methods=["POST"])
+    def create_report():
+        """Create a new employee report."""
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+            
+        content = request.form.get("report_content")
+        if not content:
+            flash("Report content cannot be empty.", "danger")
+            return redirect(url_for("employee_dashboard"))
+            
+        employee_number = session.get("user_number")
+        db.create_report(employee_number, content)
+        
+        flash("Report submitted successfully!", "success")
+        return redirect(url_for("employee_dashboard"))
 
     @app.route("/fire_employee/<int:employee_id>", methods=["POST"])
     def fire_employee(employee_id):
@@ -132,54 +123,3 @@ def init_employee_routes(app, database):
             flash("Registration endpoint not fully implemented yet.", "info")
             return redirect(url_for("login"))
         return render_template("register.html")
-    
-
-    @app.route("/admin/payment/delete", methods=["POST"])
-    def delete_payment():
-        """Allows Managers/VPs to delete a payment."""
-        if session.get("user_type") != "employee":
-            return redirect(url_for("login"))
-
-        # 1. Role Check
-        emp = db.get_employee_details(session.get("user_number"))
-        if emp['jobTitle'] == 'Sales Rep':
-            flash("Access Denied: Only Managers can delete payments.", "danger")
-            return redirect(url_for("employee_dashboard"))
-
-        # 2. Get Data
-        customer_num = request.form.get("customer_number")
-        check_num = request.form.get("check_number")
-
-        # 3. Execute Delete
-        db.delete_payment(customer_num, check_num)
-        
-        flash(f"Payment {check_num} deleted successfully.", "warning")
-        return redirect(url_for("employee_view_customer_orders", customer_num=customer_num))
-
-
-    @app.route("/admin/payment/edit/<int:customer_num>/<string:check_num>", methods=["GET", "POST"])
-    def edit_payment(customer_num, check_num):
-        # 1. Security Check (Managers Only)
-        if session.get("user_type") != "employee":
-            return redirect(url_for("login"))
-        
-        emp = db.get_employee_details(session.get("user_number"))
-        if emp['jobTitle'] == 'Sales Rep':
-            flash("Access Denied.", "danger")
-            return redirect(url_for("employee_dashboard"))
-
-        # 2. Handle Form Submission
-        if request.method == "POST":
-            new_check_num = request.form.get("checkNumber")
-            new_amount = request.form.get("amount")
-            
-            if not new_check_num or not new_amount:
-                flash("All fields are required.", "warning")
-            else:
-                db.update_payment(customer_num, check_num, new_check_num, new_amount)
-                flash("Payment updated successfully.", "success")
-                return redirect(url_for("employee_view_customer_orders", customer_num=customer_num))
-
-        # 3. Render Edit Page
-        payment = db.get_payment_details(customer_num, check_num)
-        return render_template("edit_payment.html", payment=payment)
