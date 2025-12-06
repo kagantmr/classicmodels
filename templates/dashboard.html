@@ -5,46 +5,47 @@
 <p class="lead">Welcome, {{ session.get("user_name") }}! (Employee #{{ session.get('user_number') }})</p>
 
 {% if is_sales_rep or is_manager %}
-    
-    {% if is_manager %}
-        <h3>All Customers (Management View)</h3>
-        <p class="text-muted">Select a customer to manage orders and payments.</p>
-    {% else %}
-        <h3>Your Assigned Customers</h3>
-    {% endif %}
 
-    {% if customers %}
-    <div class="list-group shadow-sm mb-5" style="max-height: 500px; overflow-y: auto;">
-        {% for customer in customers %}
-        <a href="{{ url_for('employee_view_customer_orders', customer_num=customer.customerNumber) }}"
-            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <div>
-                <div class="fw-bold">{{ customer.customerName }}</div>
-                <small class="text-muted">
-                    {{ customer.city }}, {{ customer.country }}
-                    
-                    {% if is_manager and customer.salesRepEmployeeNumber %}
-                        <span class="badge bg-secondary ms-2" style="font-size: 0.7em;">Rep #{{ customer.salesRepEmployeeNumber }}</span>
-                    {% endif %}
-                </small>
-            </div>
-            <div class="text-end">
-                <span class="badge bg-primary rounded-pill mb-1">ID: {{ customer.customerNumber }}</span><br>
-                
-                {% if customer.balance is defined %}
-                    {% if customer.balance > 0 %}
-                        <span class="badge bg-danger">Debt: ${{ "%.2f"|format(customer.balance) }}</span>
-                    {% else %}
-                        <span class="badge bg-success">No Debt</span>
-                    {% endif %}
+{% if is_manager %}
+<h3>All Customers (Management View)</h3>
+<p class="text-muted">Select a customer to manage orders and payments.</p>
+{% else %}
+<h3>Your Assigned Customers</h3>
+{% endif %}
+
+{% if customers %}
+<div class="list-group shadow-sm mb-5" style="max-height: 500px; overflow-y: auto;">
+    {% for customer in customers %}
+    <a href="{{ url_for('employee_view_customer_orders', customer_num=customer.customerNumber) }}"
+        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div>
+            <div class="fw-bold">{{ customer.customerName }}</div>
+            <small class="text-muted">
+                {{ customer.city }}, {{ customer.country }}
+
+                {% if is_manager and customer.salesRepEmployeeNumber %}
+                <span class="badge bg-secondary ms-2" style="font-size: 0.7em;">Rep #{{ customer.salesRepEmployeeNumber
+                    }}</span>
                 {% endif %}
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-        <div class="alert alert-warning">No customers found.</div>
-    {% endif %}
+            </small>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary rounded-pill mb-1">ID: {{ customer.customerNumber }}</span><br>
+
+            {% if customer.balance is defined %}
+            {% if customer.balance > 0 %}
+            <span class="badge bg-danger">Debt: ${{ "%.2f"|format(customer.balance) }}</span>
+            {% else %}
+            <span class="badge bg-success">No Debt</span>
+            {% endif %}
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-warning">No customers found.</div>
+{% endif %}
 
 {% endif %}
 
@@ -91,6 +92,8 @@
         </div>
     </div>
 </div>
+
+
 
 {% if team_reports %}
 <div class="card shadow-sm mt-4">
@@ -165,6 +168,58 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+{% endif %}
+
+
+{% if is_manager %}
+<div class="card shadow-sm mb-4 border-primary">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Management: Add New Sales Rep</h5>
+        <small>New reps will report to you</small>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('add_employee') }}" method="POST">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="firstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="lastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="extension" class="form-label">Extension</label>
+                    <input type="text" class="form-control" id="extension" name="extension" placeholder="e.g. x1234"
+                        required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+            </div>
+            <div class="row align-items-end">
+                <div class="col-md-6 mb-3">
+                    <label for="officeCode" class="form-label">Office Assignment</label>
+                    <select class="form-select" id="officeCode" name="officeCode" required>
+                        <option value="" selected disabled>Select an Office...</option>
+                        {% for office in offices %}
+                        <option value="{{ office.officeCode }}">
+                            {{ office.city }}, {{ office.country }} ({{ office.employee_count }} employees)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <button type="submit" class="btn btn-outline-primary w-100 fw-bold">
+                        <i class="bi bi-person-plus-fill"></i> Add Sales Rep
+                    </button>
+                    <div class="form-text text-center mt-1">A random password will be generated and shown once.</div>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 {% endif %}

@@ -540,6 +540,23 @@ class DatabaseHandler:
         query = "UPDATE orderdetails SET quantityOrdered = %s WHERE orderDetailsNumber = %s"
         return self.execute_query(query, (new_quantity, detail_id))
 
+    def get_next_employee_number(self):
+        """Returns the next available employee number."""
+        query = "SELECT MAX(employeeNumber) as max_id FROM employees"
+        result = self.execute_query(query, fetchone=True)
+        if result and result['max_id']:
+            return result['max_id'] + 1
+        return 1001 # Default start if table is empty
+
+    def add_employee(self, employee_number, last_name, first_name, extension, email, office_code, reports_to, job_title):
+        """Inserts a new employee record."""
+        query = """
+            INSERT INTO employees (employeeNumber, lastName, firstName, extension, email, officeCode, reportsTo, jobTitle)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        params = (employee_number, last_name, first_name, extension, email, office_code, reports_to, job_title)
+        return self.execute_query(query, params)
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()

@@ -1,4 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash
+import string
+import random
 
 db = None
 
@@ -23,9 +26,13 @@ def init_employee_routes(app, database):
         is_sales_rep = (employee_details['jobTitle'] == 'Sales Rep')
         
         # Anyone who is NOT a Sales Rep is considered a Manager (President, VP, etc.)
-        is_manager = not is_sales_rep 
+        # Ideally we check for "Manager" in title, but user specified "sales managers can add"
+        # and "jobTitle" for Anthony Bow is "Sales Manager (NA)". 
+        # So "not is_sales_rep" is a loose safe bet, or we check "Manager" in jobTitle
+        is_manager = "Manager" in employee_details['jobTitle'] or "President" in employee_details['jobTitle'] or "VP" in employee_details['jobTitle']
 
         customers = []
+        offices = []
         
         # 2. Fetch Customers
         if is_sales_rep:
@@ -39,6 +46,9 @@ def init_employee_routes(app, database):
         else:
             # Managers -> ALL customers (This function must exist in db_helper.py!)
             customers = db.get_all_customers_with_balance()
+            
+            # Fetch offices for the Add Employee form
+            offices = db.get_all_offices()
 
         # 3. Fetch Reports
         my_reports = db.get_employee_reports(employee_number)
@@ -53,7 +63,51 @@ def init_employee_routes(app, database):
                                my_reports=my_reports,
                                team_reports=team_reports,
                                subordinates=subordinates,
-                               is_sales_rep=is_sales_rep)
+                               is_sales_rep=is_sales_rep,
+                               is_manager=is_manager,
+                               offices=offices)
+
+    @app.route("/add_employee", methods=["POST"])
+    def add_employee():
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+
+        # Verify Manager Status Again
+        manager_number = session.get("user_number")
+        manager_details = db.get_employee_details(manager_number)
+        is_manager = "Manager" in manager_details['jobTitle'] or "President" in manager_details['jobTitle'] or "VP" in manager_details['jobTitle']
+        
+        if not is_manager:
+            flash("Only Managers can add employees.", "danger")
+            return redirect(url_for("employee_dashboard"))
+
+        first_name = request.form.get("firstName")
+        last_name = request.form.get("lastName")
+        extension = request.form.get("extension")
+        email = request.form.get("email")
+        office_code = request.form.get("officeCode")
+
+        if not all([first_name, last_name, extension, email, office_code]):
+            flash("All fields are required.", "danger")
+            return redirect(url_for("employee_dashboard"))
+
+        # Generate ID
+        new_id = db.get_next_employee_number()
+        
+        # Add to DB (Always 'Sales Rep', reports to current user)
+        db.add_employee(new_id, last_name, first_name, extension, email, office_code, manager_number, "Sales Rep")
+
+        # Generate Random Password
+        chars = string.ascii_letters + string.digits + "!@#$%"
+        password = ''.join(random.choice(chars) for _ in range(10))
+        hashed_pw = generate_password_hash(password)
+
+        # Create Auth
+        db.create_employee_auth(new_id, hashed_pw)
+
+        flash(f"New Sales Rep added successfully! ID: {new_id}, Password: {password}", "success")
+        return redirect(url_for("employee_dashboard"))
 
     @app.route("/employee/customer_orders/<int:customer_num>")
     def employee_view_customer_orders(customer_num):
