@@ -1,4 +1,5 @@
 from flask import render_template, redirect, url_for, flash, session, request
+from routes.cart import get_cart
 
 db = None
 
@@ -64,10 +65,3 @@ def init_main_routes(app, database):
         else:
             flash("Your profile type is unknown.", "danger")
             return redirect(url_for("index"))
-
-
-def get_cart():
-    """Return the current cart stored in session as a dict."""
-    if "cart" not in session:
-        session["cart"] = {}
-    return session["cart"]
