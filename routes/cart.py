@@ -163,9 +163,9 @@ def init_cart_routes(app, database):
         flash(f"Order #{next_order_number} placed successfully!", "success")
         return redirect(url_for("order_detail", order_number=next_order_number))
 
-
 def get_cart():
     """Return the current cart stored in session."""
     if "cart" not in session:
         session["cart"] = {}
     return session["cart"]
+

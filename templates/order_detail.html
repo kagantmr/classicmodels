@@ -19,9 +19,15 @@
 <hr>
 
 <h4>Items</h4>
-<table class="table table-striped">
+<table class="table table-striped align-middle">
   <thead>
-    <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+    <tr>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Total</th>
+        <th>Actions</th> 
+    </tr>
   </thead>
   <tbody>
     {% for it in items %}
@@ -31,9 +37,28 @@
           {{ it.productName }}
         </a>
       </td>
-      <td>{{ it.quantityOrdered }}</td>
+      
+      <td>
+        {% if order.status == 'In Process' %}
+            <form action="{{ url_for('update_order_item', detail_id=it.orderDetailsNumber) }}" method="POST" class="d-flex align-items-center">
+                <input type="number" name="quantity" value="{{ it.quantityOrdered }}" min="1" class="form-control form-control-sm me-2" style="width: 70px;">
+                <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+            </form>
+        {% else %}
+            {{ it.quantityOrdered }}
+        {% endif %}
+      </td>
+
       <td>${{ "%.2f"|format(it.priceEach) }}</td>
       <td>${{ "%.2f"|format(it.quantityOrdered * it.priceEach) }}</td>
+
+      <td>
+        {% if order.status == 'In Process' %}
+            <form action="{{ url_for('delete_order_item', detail_id=it.orderDetailsNumber) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this item?');">
+                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+            </form>
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>

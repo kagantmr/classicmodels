@@ -53,6 +53,7 @@
     </div>
 
     <h4>Payment History</h4>
+    <a href="{{ url_for('make_payment') }}" class="btn btn-sm btn-success mb-3">Record New Payment</a>
     <table class="table table-striped">
     <thead>
         <tr>
@@ -71,6 +72,7 @@
         {% endfor %}
     </tbody>
     </table>
+    
 
 {% else %}
     <div class="alert alert-warning">Could not load customer profile.</div>

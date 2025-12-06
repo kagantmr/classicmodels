@@ -75,3 +75,68 @@ def init_order_routes(app, database):
 
         flash(f"Order #{order_number} has been cancelled.", "warning")
         return redirect(url_for("order_detail", order_number=order_number))
+
+
+    @app.route("/order/item/<int:detail_id>/update", methods=["POST"])
+    def update_order_item(detail_id):
+        # 1. Security Check
+        if not session.get("user_number"):
+            flash("Please log in.", "danger")
+            return redirect(url_for("login"))
+
+        try:
+            new_quantity = int(request.form.get("quantity"))
+        except (ValueError, TypeError):
+            new_quantity = 1
+        
+        item = db.get_order_detail_by_id(detail_id)
+        if not item:
+            flash("Item not found.", "danger")
+            return redirect(url_for("index"))
+
+        order = db.get_order(item['orderNumber'])
+        if order['status'] != 'In Process':
+            flash("Cannot update items in a processed order.", "danger")
+            return redirect(url_for("order_detail", order_number=item['orderNumber']))
+
+        if new_quantity > 0:
+            db.update_order_item_quantity(detail_id, new_quantity)
+            flash("Quantity updated.", "success")
+        else:
+            flash("Quantity must be at least 1.", "warning")
+
+        return redirect(url_for("order_detail", order_number=item['orderNumber']))
+
+    @app.route("/order/item/<int:detail_id>/delete", methods=["POST"])
+    def delete_order_item(detail_id):
+        if not session.get("user_number"):
+            flash("Please log in.", "danger")
+            return redirect(url_for("login"))
+
+        item = db.get_order_detail_by_id(detail_id)
+        if not item:
+            flash("Item not found.", "danger")
+            return redirect(url_for("index"))
+
+        order_number = item['orderNumber']
+        order = db.get_order(order_number)
+        
+        if order['status'] != 'In Process':
+            flash("Cannot remove items from a processed order.", "danger")
+            return redirect(url_for("order_detail", order_number=order_number))
+
+        db.delete_order_item(detail_id)
+
+        remaining_items = db.get_order_details(order_number)
+        
+        if not remaining_items:
+            # The order is now empty. Autocancel it.
+            db.execute_query(
+                "UPDATE orders SET status = 'Cancelled', comments = 'Auto-cancelled: All items removed.' WHERE orderNumber = %s",
+                (order_number,)
+            )
+            flash(f"Order #{order_number} has been cancelled because it is empty.", "warning")
+            # Redirect to the dashboard/orders list, NOT the empty order page
+            return redirect(url_for("customer_orders"))
+        flash("Item removed from order.", "success")
+        return redirect(url_for("order_detail", order_number=order_number))

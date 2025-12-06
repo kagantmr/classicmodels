@@ -480,6 +480,72 @@ class DatabaseHandler:
                     """
         return self.execute_query(query,(product_line,))
 
+    def delete_order_item(self, order_details_id):
+        """Removes a single line item from an order."""
+        query = "DELETE FROM orderdetails WHERE orderDetailsNumber = %s"
+        return self.execute_query(query, (order_details_id,))
+
+    # --- Add this to db_helper.py inside DatabaseHandler class ---
+
+    def update_order_item_quantity(self, detail_id, new_quantity):
+        """Updates the quantity of a specific order line item."""
+        query = "UPDATE orderdetails SET quantityOrdered = %s WHERE orderDetailsNumber = %s"
+        return self.execute_query(query, (new_quantity, detail_id))
+
+    def delete_order_item(self, detail_id):
+        """Removes a single line item from an order."""
+        query = "DELETE FROM orderdetails WHERE orderDetailsNumber = %s"
+        return self.execute_query(query, (detail_id,))
+
+    def get_order_detail_by_id(self, detail_id):
+        """Fetches a single order detail row. Needed for security checks."""
+        query = "SELECT * FROM orderdetails WHERE orderDetailsNumber = %s"
+        return self.execute_query(query, (detail_id,), fetchone=True)
+
+    def create_payment(self, customer_number, check_number, amount):
+        """Inserts a new payment record for a customer."""
+        # paymentDate is set to the current date/time using NOW()
+        query = "INSERT INTO payments (customerNumber, checkNumber, paymentDate, amount) VALUES (%s, %s, NOW(), %s)"
+        # The parameters match the query placeholders: (customer_number, check_number, amount)
+        return self.execute_query(query, (customer_number, check_number, amount))
+
+    def delete_payment(self, customer_number, check_number):
+        """Deletes a specific payment record."""
+        query = "DELETE FROM payments WHERE customerNumber = %s AND checkNumber = %s"
+        return self.execute_query(query, (customer_number, check_number))
+
+    def update_payment_check_number(self, customer_number, old_check_number, new_check_number):
+        """Updates the check number for a payment (e.g., to fix a typo)."""
+        query = "UPDATE payments SET checkNumber = %s WHERE customerNumber = %s AND checkNumber = %s"
+        return self.execute_query(query, (new_check_number, customer_number, old_check_number))
+
+    def get_payment_details(self, customer_number, check_number):
+        """Fetches a single payment record for editing."""
+        query = "SELECT * FROM payments WHERE customerNumber = %s AND checkNumber = %s"
+        return self.execute_query(query, (customer_number, check_number), fetchone=True)
+
+    def update_payment(self, customer_number, old_check_number, new_check_number, new_amount):
+        """Updates a payment's check number and amount."""
+        query = """
+            UPDATE payments 
+            SET checkNumber = %s, amount = %s 
+            WHERE customerNumber = %s AND checkNumber = %s
+        """
+        return self.execute_query(query, (new_check_number, new_amount, customer_number, old_check_number))
+
+    def get_all_customers_with_balance(self):
+        """Fetches all customers for the manager view."""
+        query = "SELECT customerNumber, customerName, city, country, salesRepEmployeeNumber FROM customers ORDER BY customerName"
+        customers = self.execute_query(query)
+        
+        results = []
+        for c in customers:
+            bal_data = self.get_customer_balance(c['customerNumber'])
+            c['balance'] = bal_data['balance']
+            results.append(c)
+            
+        return results    
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()
