@@ -218,3 +218,40 @@ def init_customer_routes(app, database):
 
         return redirect(url_for("account_settings"))
             
+
+    @app.route("/payment/make", methods=["GET", "POST"])
+    def make_payment():
+        # 1. Security Check: Must be logged in as a customer
+        if not session.get("user_number") or session.get("user_type") != 'customer':
+            flash("You must be logged in as a customer to make a payment.", "danger")
+            return redirect(url_for("login"))
+        
+        customer_number = session.get("user_number")
+
+        if request.method == "POST":
+            check_number = request.form.get("checkNumber").strip()
+            amount_str = request.form.get("amount")
+
+            # 2. Validation (Rubric requirement)
+            try:
+                amount = float(amount_str)
+                if amount <= 0:
+                    flash("Amount must be a positive number.", "danger")
+                    return render_template("make_payment.html", checkNumber=check_number, amount=amount_str)
+            except (ValueError, TypeError):
+                flash("Invalid amount entered.", "danger")
+                return render_template("make_payment.html", checkNumber=check_number, amount=amount_str)
+
+            if not check_number or len(check_number) < 5:
+                flash("Please enter a valid check number/transaction ID (at least 5 characters).", "danger")
+                return render_template("make_payment.html", checkNumber=check_number, amount=amount)
+
+            # 3. Action: Insert into DB
+            db.create_payment(customer_number, check_number, amount)
+            flash(f"Payment of ${amount:.2f} recorded successfully.", "success")
+            
+            # Redirect to the profile page to see the new payment in the history
+            return redirect(url_for("customer_profile")) 
+
+        # GET request: Render the form
+        return render_template("make_payment.html")

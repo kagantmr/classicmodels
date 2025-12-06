@@ -3,13 +3,17 @@ DROP TABLE IF EXISTS `orderdetails`;
 CREATE TABLE `orderdetails` (
     `orderDetailsNumber` INT         NOT NULL AUTO_INCREMENT,
     `orderNumber`        INT         NOT NULL,
-    `productCode`        VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+    `productCode`        VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
     `quantityOrdered`    INT         NOT NULL,
     `priceEach`          double      NOT NULL,
     `orderLineNumber`    SMALLINT    NOT NULL,
     PRIMARY KEY (`orderDetailsNumber`),
-    FOREIGN KEY (`orderNumber`) REFERENCES `orders`(`orderNumber`),
+    FOREIGN KEY (`orderNumber`) REFERENCES `orders`(`orderNumber`)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     FOREIGN KEY (`productCode`) REFERENCES `products`(`productCode`)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 LOCK TABLES `orderdetails` WRITE;

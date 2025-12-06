@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Payment</h2>
+    <div class="card p-4 shadow-sm" style="max-width: 500px;">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Customer #</label>
+                <input type="text" class="form-control" value="{{ payment.customerNumber }}" disabled>
+            </div>
+            
+            <div class="mb-3">
+                <label for="checkNumber" class="form-label">Check Number / Transaction ID</label>
+                <input type="text" class="form-control" id="checkNumber" name="checkNumber" value="{{ payment.checkNumber }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount ($)</label>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" value="{{ payment.amount }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{{ url_for('employee_view_customer_orders', customer_num=payment.customerNumber) }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
