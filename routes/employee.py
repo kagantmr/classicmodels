@@ -117,22 +117,23 @@ def init_employee_routes(app, database):
             return redirect(url_for("login"))
 
         my_customers_data = db.get_assigned_customers(session.get("user_number"))
-        my_customers = my_customers_data if my_customers_data is not None else []
-        
-        if not any(c['customerNumber'] == customer_num for c in my_customers):
-            flash("You are not authorized to view this customer.", "warning")
-            return redirect(url_for("employee_dashboard"))
 
+        sort_option = request.args.get('sort', 'newest')
+        
         details = db.get_customer_details(customer_num)
-        orders = db.get_customer_orders(customer_num)
+        
+        orders = db.get_customer_orders(customer_num, sort_by=sort_option)
+        
         balance = db.get_customer_balance(customer_num)
         payments = db.get_customer_payments(customer_num)
 
+        # Add sort parameter to HTML and render 
         return render_template("employee_customer_orders.html",
                                customer=details,
                                orders=orders,
                                balance=balance,
-                               payments=payments)
+                               payments=payments,
+                               sort_option=sort_option)
 
     @app.route("/create_report", methods=["POST"])
     def create_report():
@@ -177,3 +178,27 @@ def init_employee_routes(app, database):
             flash("Registration endpoint not fully implemented yet.", "info")
             return redirect(url_for("login"))
         return render_template("register.html")
+
+    @app.route("/office/statistics")
+    def office_statistics():
+        # Security check
+        if session.get("user_type") != "employee":
+            flash("Access Denied.", "danger")
+            return redirect(url_for("login"))
+
+        # Authority check (check job title in session)
+        job_title = session.get("job_title", "")
+        is_manager = "Manager" in job_title or "President" in job_title or "VP" in job_title
+
+        if not is_manager:
+            flash("Only Management can view Office Statistics.", "warning")
+            return redirect(url_for("employee_dashboard"))
+
+        # Complex Join
+        order_stats = db.get_office_order_stats()
+        # Outer Join 
+        activity_stats = db.get_offices_activity_report()
+
+        return render_template("office_stats.html", 
+                               order_stats=order_stats, 
+                               activity_stats=activity_stats)

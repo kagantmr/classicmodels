@@ -45,9 +45,19 @@ class DatabaseHandler:
         query = "SELECT * FROM customers WHERE customerNumber = %s"
         return self.execute_query(query, (customer_number,), fetchone=True)
 
-    def get_customer_orders(self, customer_number):
-        """Fetches all orders for a specific customer, newest first."""
-        query = "SELECT * FROM orders WHERE customerNumber = %s ORDER BY orderDate DESC"
+    def get_customer_orders(self, customer_number, sort_by='newest'):
+        """
+        Fetches orders with sorting.
+        sort_by: 'newest' (default) or 'oldest'
+        """
+        query = "SELECT * FROM orders WHERE customerNumber = %s"
+        
+        # Safe against SQL injection because check parameters which coming from users
+        if sort_by == 'oldest':
+            query += " ORDER BY orderDate ASC"  # old to new
+        else:
+            query += " ORDER BY orderDate DESC" # new to old
+
         return self.execute_query(query, (customer_number,))
 
     def get_single_product(self, product_code):
@@ -556,6 +566,44 @@ class DatabaseHandler:
         """
         params = (employee_number, last_name, first_name, extension, email, office_code, reports_to, job_title)
         return self.execute_query(query, params)
+
+    def get_office_order_stats(self):
+        """
+        Complex Join 4+ Tables, Group By
+        Returns the total order numbers based on office.
+        """
+        query = """
+            SELECT 
+                o.city, 
+                o.country,
+                COUNT(ord.orderNumber) as total_orders,
+                MAX(ord.orderDate) as last_order_date
+            FROM offices o
+            JOIN employees e ON o.officeCode = e.officeCode
+            JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+            JOIN orders ord ON c.customerNumber = ord.customerNumber
+            GROUP BY o.officeCode, o.city, o.country
+            ORDER BY total_orders DESC
+        """
+        return self.execute_query(query)
+
+    def get_offices_activity_report(self):
+        """
+        Outer Join
+        Shows even offices with no customers (thanks to LEFT JOIN)
+        """
+        query = """
+            SELECT 
+                o.city,
+                o.country,
+                COUNT(c.customerNumber) as customer_count
+            FROM offices o
+            LEFT JOIN employees e ON o.officeCode = e.officeCode
+            LEFT JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+            GROUP BY o.officeCode, o.city, o.country
+            ORDER BY customer_count DESC
+        """
+        return self.execute_query(query)
 
     def close(self):
         """Closes the cursor and database connection."""

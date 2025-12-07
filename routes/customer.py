@@ -42,14 +42,18 @@ def init_customer_routes(app, database):
             return redirect(url_for("index"))
 
         customerNumber = session.get("user_number")
+       
+        # take sort parameter (default is newest) 
+        sort_option = request.args.get('sort', 'newest') 
         
         if not customerNumber:
             flash("Error finding your profile. Please log in again.", "danger")
             return redirect(url_for('login'))
         
-        orders = db.get_customer_orders(customerNumber)
+        # send sort request to database
+        orders = db.get_customer_orders(customerNumber, sort_by=sort_option)
         
-        return render_template("customer_orders.html", orders=orders)
+        return render_template("customer_orders.html", orders=orders, sort_option=sort_option)
     
     @app.route("/customer/signup", methods=["GET","POST"])
     def customer_signup():

@@ -1,38 +1,161 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2 class="mb-3">My Order History</h2>
-{% if orders %}
-<div class="list-group shadow-sm">
-    {% for order in orders %}
-    
-    <a href="{{ url_for('order_detail', order_number=order.orderNumber) }}" class="list-group-item list-group-item-action">
-        <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">Order #{{ order.orderNumber }}</h5>
-            <small class="text-muted">{{ order.orderDate.strftime('%Y-%m-%d') }}</small>
-        </div>
-        <p class="mb-1">
-            <strong>Status:</strong> 
-            {% if order.status == 'Shipped' %}
-                <span class="badge bg-success">{{ order.status }}</span>
-            {% elif order.status == 'Cancelled' or order.status == 'Disputed' %}
-                <span class="badge bg-danger">{{ order.status }}</span>
-            {% elif order.status == 'On Hold' %}
-                <span class="badge bg-warning text-dark">{{ order.status }}</span>
-            {% else %}
-                <span class="badge bg-info">{{ order.status }}</span>
-            {% endif %}
-        </p>
-        {% if order.shippedDate %}
-            <small class="text-muted">Shipped on: {{ order.shippedDate.strftime('%Y-%m-%d') }}</small>
-        {% endif %}
-        {% if order.comments %}
-            <p class="small mt-2 mb-0 fst-italic text-muted"><strong>Note:</strong> {{ order.comments }}</p>
-        {% endif %}
-    </a> {% endfor %}
-</div>
-{% else %}
-<div class="alert alert-info">You have not placed any orders yet.</div>
-{% endif %}
+<style>
+    /* Üst taraftaki renkli alan */
+    .dashboard-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); /* Lacivertten Maviye */
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
 
+    /* Sipariş Kartları */
+    .order-card {
+        border: none;
+        border-radius: 12px;
+        background: #fff;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        overflow: hidden; /* Köşelerin yuvarlak kalması için */
+    }
+    
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    }
+
+    /* Kartın Üst Kısmı (Gri Şerit) */
+    .card-header-custom {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        padding: 1rem 1.5rem;
+    }
+
+    /* İkonların rengi */
+    .icon-muted { color: #adb5bd; }
+    
+    /* Durum renkleri için sol kenarlık */
+    .status-border {
+        border-left: 6px solid transparent;
+    }
+    .status-Shipped { border-left-color: #198754; }
+    .status-Cancelled { border-left-color: #dc3545; }
+    .status-On-Hold { border-left-color: #ffc107; }
+    .status-In-Process { border-left-color: #0dcaf0; }
+    .status-Resolved { border-left-color: #0d6efd; }
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <div class="dashboard-header d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h2 class="fw-bold mb-1">📦 Order History</h2>
+            <p class="mb-0 opacity-75">Welcome back! Here are your past purchases.</p>
+        </div>
+
+        <form method="GET" action="{{ url_for('customer_orders') }}" class="d-flex align-items-center mt-3 mt-md-0">
+            <label for="sort" class="me-2 fw-bold text-white small">Sort by:</label>
+            <select name="sort" id="sort" class="form-select form-select-sm border-0 shadow-none" 
+                    style="width: 150px; background-color: rgba(255,255,255,0.2); color: white; cursor: pointer;" 
+                    onchange="this.form.submit()">
+                <option value="newest" class="text-dark" {% if sort_option == 'newest' %}selected{% endif %}>📅 Newest First</option>
+                <option value="oldest" class="text-dark" {% if sort_option == 'oldest' %}selected{% endif %}>📅 Oldest First</option>
+            </select>
+        </form>
+    </div>
+
+    {% if orders %}
+    <div class="row g-4"> {% for order in orders %}
+        <div class="col-12">
+            
+            <a href="{{ url_for('order_detail', order_number=order.orderNumber) }}" class="text-decoration-none text-dark">
+                <div class="card order-card shadow-sm status-{{ order.status | replace(' ', '-') }} status-border">
+                    
+                    <div class="card-header-custom d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white p-2 rounded-circle shadow-sm me-3 text-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
+                                  <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-1.187 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-uppercase small text-muted">Order Number</h6>
+                                <span class="fs-5 fw-bold font-monospace">#{{ order.orderNumber }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <small class="text-muted d-block">Order Date</small>
+                            <span class="fw-semibold">
+                                <i class="bi bi-calendar3 me-1"></i> {{ order.orderDate.strftime('%d %b, %Y') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <span class="text-muted small">Status:</span>
+                                <div class="mt-1">
+                                    {% if order.status == 'Shipped' %}
+                                        <span class="badge rounded-pill bg-success px-3 py-2">
+                                            ✅ Shipped
+                                        </span>
+                                        {% if order.shippedDate %}
+                                            <small class="text-success ms-2 fw-bold">on {{ order.shippedDate.strftime('%d %b') }}</small>
+                                        {% endif %}
+                                    
+                                    {% elif order.status == 'Cancelled' %}
+                                        <span class="badge rounded-pill bg-danger px-3 py-2">🚫 Cancelled</span>
+                                    
+                                    {% elif order.status == 'In Process' %}
+                                        <span class="badge rounded-pill bg-info text-dark px-3 py-2">⏳ In Process</span>
+                                    
+                                    {% elif order.status == 'On Hold' %}
+                                        <span class="badge rounded-pill bg-warning text-dark px-3 py-2">✋ On Hold</span>
+                                    
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-secondary px-3 py-2">{{ order.status }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                {% if order.comments %}
+                                    <div class="d-flex text-muted small fst-italic bg-light p-2 rounded">
+                                        <div class="me-2">💬</div>
+                                        <div class="text-truncate">{{ order.comments }}</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-2 text-md-end">
+                                <span class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    Details &rarr;
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card border-0 shadow-sm text-center py-5">
+        <div class="card-body">
+            <div class="mb-3 text-secondary" style="font-size: 4rem; opacity: 0.2;">🛒</div>
+            <h3 class="text-muted fw-bold">No orders yet</h3>
+            <p class="text-secondary mb-4">It looks like you haven't made any purchases.</p>
+            <a href="{{ url_for('productlines') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
+                Start Shopping
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
 {% endblock %}
