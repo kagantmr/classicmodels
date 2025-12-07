@@ -27,13 +27,13 @@
 
     .table-header-custom th {
         background-color: #f8f9fa;
-        color: #343a40;
+        color: #2c3e50;
         font-weight: 800;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         padding: 1.2rem 1rem;
-        border-bottom: 2px solid #dee2e6;
+        border-bottom: 2px solid #ced4da;
         border-right: 1px solid #dee2e6;
     }
     
@@ -41,12 +41,14 @@
     .table-header-custom th:last-child { border-right: none; }
 
     td {
-        padding: 1rem 1rem;
+        padding: 1.2rem 1rem;
         vertical-align: middle;
         border-bottom: 1px solid #e9ecef; 
         border-right: 1px solid #f1f3f5;  
         color: #495057;
+        font-size: 0.95rem;
     }
+    
     td:last-child { border-right: none; }
 
     .table-hover tbody tr:hover {
@@ -97,10 +99,8 @@
                     <tr>
                         <td class="ps-4 fw-bold text-dark">{{ stat.city }}</td>
                         <td class="text-secondary">{{ stat.country }}</td>
-                        <td class="text-center">
-                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-4 py-2 fs-6 fw-bold border border-success border-opacity-25">
-                                {{ stat.total_orders }}
-                            </span>
+                        <td class="text-center text-success fw-bold fs-5">
+                            {{ stat.total_orders }}
                         </td>
                         <td class="text-end pe-4 text-muted font-monospace small">
                             {{ stat.last_order_date }}
@@ -137,16 +137,16 @@
                     <tr>
                         <td class="ps-4 fw-bold text-dark">{{ stat.city }}</td>
                         <td class="text-secondary">{{ stat.country }}</td>
-                        <td class="text-center fw-bold text-dark">
+                        <td class="text-center text-success fw-bold fs-5">
                             {{ stat.customer_count }}
                         </td>
                         <td class="text-end pe-4">
                             {% if stat.customer_count == 0 %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 fw-bold border border-danger border-opacity-25">
+                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 fw-bold border border-danger border-opacity-25" style="min-width: 90px;">
                                     Inactive
                                 </span>
                             {% else %}
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 fw-bold border border-success border-opacity-25">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 fw-bold border border-success border-opacity-25" style="min-width: 90px;">
                                     Active
                                 </span>
                             {% endif %}
