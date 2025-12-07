@@ -13,7 +13,7 @@ CREATE TABLE `orderdetails` (
         ON UPDATE CASCADE,
     FOREIGN KEY (`productCode`) REFERENCES `products`(`productCode`)
         ON DELETE RESTRICT
-        ON UPDATE CASCADE,
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 LOCK TABLES `orderdetails` WRITE;
