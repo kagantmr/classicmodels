@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, session
+from flask import render_template, request, redirect, url_for, flash, session, request
 from werkzeug.security import generate_password_hash
 import string
 import random
@@ -18,6 +18,9 @@ def init_employee_routes(app, database):
             return redirect(url_for("index"))
 
         employee_number = session.get("user_number")
+        search_query = request.args.get("search", "").strip()
+        sort_order = request.args.get("sort", "none")   # "asc", "desc", or "none"
+
         
         # 1. Determine Role
         employee_details = db.get_employee_details(employee_number)
@@ -37,7 +40,7 @@ def init_employee_routes(app, database):
         # 2. Fetch Customers
         if is_sales_rep:
             # Sales Reps -> Only assigned customers
-            raw_customers = db.get_assigned_customers(employee_number)
+            raw_customers = db.get_assigned_customers(employee_number, search_query, sort_order)
             # Calculate balance manually since we aren't using the bulk fetch
             for c in raw_customers:
                 bal = db.get_customer_balance(c["customerNumber"])
@@ -45,7 +48,7 @@ def init_employee_routes(app, database):
                 customers.append(c)
         else:
             # Managers -> ALL customers (This function must exist in db_helper.py!)
-            customers = db.get_all_customers_with_balance()
+            customers = db.get_all_customers_with_balance(search_query, sort_order)
             
             # Fetch offices for the Add Employee form
             offices = db.get_all_offices()
@@ -60,6 +63,8 @@ def init_employee_routes(app, database):
 
         return render_template("dashboard.html",
                                customers=customers,
+                               search_query=search_query,
+                               sort_order=sort_order,
                                my_reports=my_reports,
                                team_reports=team_reports,
                                subordinates=subordinates,

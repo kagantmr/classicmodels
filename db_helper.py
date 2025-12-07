@@ -35,10 +35,25 @@ class DatabaseHandler:
             
         return None
 
-    def get_assigned_customers(self, employee_number):
+    def get_assigned_customers(self, employee_number,search="", sort="none"):
         """Fetches all customers for a specific Sales Rep."""
-        query = "SELECT customerNumber, customerName, city, country FROM customers WHERE salesRepEmployeeNumber = %s"
-        return self.execute_query(query, (employee_number,))
+        query = """
+        SELECT c.customerNumber, c.customerName, c.city, c.country,
+               c.salesRepEmployeeNumber,
+               IFNULL(SUM(p.amount), 0) AS totalSpend
+        FROM customers c
+        LEFT JOIN payments p ON c.customerNumber = p.customerNumber
+        WHERE c.salesRepEmployeeNumber = %s
+          AND c.customerName LIKE %s
+        GROUP BY c.customerNumber
+        """
+
+        if sort == "asc":
+            query += " ORDER BY totalSpend ASC"
+        elif sort == "desc":
+            query += " ORDER BY totalSpend DESC"
+    
+        return self.execute_query(query, (employee_number,  (f"%{search}%",)))
     
     def get_customer_details(self, customer_number):
         """Fetches all details for a single customer."""
@@ -532,10 +547,25 @@ class DatabaseHandler:
         """
         return self.execute_query(query, (new_check_number, new_amount, customer_number, old_check_number))
 
-    def get_all_customers_with_balance(self):
+    def get_all_customers_with_balance(self, search="", sort="none"):
         """Fetches all customers for the manager view."""
-        query = "SELECT customerNumber, customerName, city, country, salesRepEmployeeNumber FROM customers ORDER BY customerName"
-        customers = self.execute_query(query)
+        query = """
+        SELECT c.customerNumber, c.customerName, c.city, c.country, 
+               c.salesRepEmployeeNumber,
+               IFNULL(SUM(p.amount), 0) AS totalSpend
+        FROM customers c
+        LEFT JOIN payments p ON c.customerNumber = p.customerNumber
+        WHERE c.customerName LIKE %s
+        GROUP BY c.customerNumber
+        """
+
+        # Sorting
+        if sort == "asc":
+            query += " ORDER BY totalSpend ASC"
+        elif sort == "desc":
+            query += " ORDER BY totalSpend DESC"
+            
+        customers = self.execute_query(query, (f"%{search}%",))
         
         results = []
         for c in customers:
