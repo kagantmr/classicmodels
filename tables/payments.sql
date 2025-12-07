@@ -5,7 +5,7 @@ CREATE TABLE payments (
     checkNumber VARCHAR(50) NOT NULL,
     paymentDate DATE NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    PRIMARY KEY (customerNumber, checkNumber)
+    PRIMARY KEY (customerNumber, checkNumber),
     FOREIGN KEY (customerNumber) REFERENCES customers(customerNumber)
         ON DELETE CASCADE
         ON UPDATE CASCADE

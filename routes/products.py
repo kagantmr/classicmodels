@@ -1,4 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash, session
+import math
 import re
 
 db = None
@@ -16,16 +17,49 @@ def init_product_routes(app, database):
             return False
         return True
 
-    # --- List all products ---
+    # --- List all products with pagination ---
     @app.route("/products")
     def products_list():
         if not _require_employee():
             return redirect(url_for("index"))
 
+        import math
+
+        # 1. Read pagination parameters
+        page = request.args.get("page", default=1, type=int)
+        per_page = request.args.get("per_page", default=10, type=int)
+
+        # Allowed values
+        if per_page not in [5, 10, 20, 50]:
+            per_page = 10
+
+        offset = (page - 1) * per_page
+
+        # 2. Count total number of products
+        row = db.execute_query("SELECT COUNT(*) AS cnt FROM products", fetchone=True)
+        total_items = row["cnt"]
+        total_pages = max(1, math.ceil(total_items / per_page))
+
+        # 3. Fetch ONLY the current page of products
         products = db.execute_query(
-            "SELECT * FROM products ORDER BY productLine, productName"
+            """
+            SELECT *
+            FROM products
+            ORDER BY productLine, productName
+            LIMIT %s OFFSET %s
+            """,
+            (per_page, offset),
         )
-        return render_template("products_list.html", products=products)
+
+        # 4. Render template
+        return render_template(
+            "products_list.html",
+            products=products,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            total_items=total_items,
+        )
 
     # --- Create new product ---
     @app.route("/products/create", methods=["GET", "POST"])
@@ -307,3 +341,4 @@ def init_product_routes(app, database):
             "product_confirm_delete.html",
             product=product,
         )
+    
