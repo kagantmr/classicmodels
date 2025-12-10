@@ -37,6 +37,7 @@ class DatabaseHandler:
 
     def get_assigned_customers(self, employee_number,search="", sort="none"):
         """Fetches all customers for a specific Sales Rep."""
+        
         query = """
         SELECT c.customerNumber, c.customerName, c.city, c.country,
                c.salesRepEmployeeNumber,
@@ -53,7 +54,7 @@ class DatabaseHandler:
         elif sort == "desc":
             query += " ORDER BY totalSpend DESC"
     
-        return self.execute_query(query, (employee_number,  (f"%{search}%",)))
+        return self.execute_query(query, (employee_number,  (f"%{search}%")))
     
     def get_customer_details(self, customer_number):
         """Fetches all details for a single customer."""
