@@ -119,50 +119,30 @@ def init_cart_routes(app, database):
 
         return render_template("checkout.html", cart=cart, total=total)
 
-    @app.route("/place_order", methods=["POST"])
+    @app.route("/cart/place_order", methods=["POST"])
     def place_order():
         if session.get("user_type") != "customer":
-            flash("You must be logged in as a customer.", "warning")
+            flash("Please log in to place an order.", "warning")
             return redirect(url_for("login"))
 
         cart = session.get("cart", {})
         if not cart:
-            flash("Cart is empty.", "warning")
+            flash("Your cart is empty.", "info")
             return redirect(url_for("view_cart"))
 
-        customerNumber = session.get("user_number")
+        customer_number = session.get("user_number")
 
-        total_amount = sum(item["priceEach"] * item["quantity"] for item in cart.values())
+        # Execute atomic transaction
+        success, result = db.create_order_transaction(customer_number, cart)
 
-        result = db.execute_query("SELECT MAX(orderNumber) AS maxNum FROM orders")
-        next_order_number = (result[0]["maxNum"] or 0) + 1
-
-        db.execute_query(
-            """
-            INSERT INTO orders (orderNumber, orderDate, requiredDate, shippedDate, status, comments, customerNumber)
-            VALUES (%s, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), NULL, 'In Process', %s, %s)
-            """,
-            (next_order_number, "Web order", customerNumber)
-        )
-
-        line_number = 1
-        for product_code, item in cart.items():
-            quantity = item["quantity"]
-            price_each = item["priceEach"]
-            db.execute_query(
-                """
-                INSERT INTO orderdetails (orderNumber, productCode, quantityOrdered, priceEach, orderLineNumber)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                (next_order_number, product_code, quantity, price_each, line_number)
-            )
-            line_number += 1
-
-        session["cart"] = {}
-
-        flash(f"Order #{next_order_number} placed successfully!", "success")
-        return redirect(url_for("order_detail", order_number=next_order_number))
-
+        if success:
+            session["cart"] = {} 
+            flash(f"Order #{result} placed successfully!", "success")
+            return redirect(url_for("order_detail", order_number=result))
+        else:
+            flash(f"Failed to place order. Error: {result}", "danger")
+            return redirect(url_for("view_cart"))
+            
 def get_cart():
     """Return the current cart stored in session."""
     if "cart" not in session:

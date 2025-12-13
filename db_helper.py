@@ -636,6 +636,55 @@ class DatabaseHandler:
         """
         return self.execute_query(query)
 
+    def create_order_transaction(self, customer_number, cart_items):
+        """
+        Creates an order and its details atomically.
+        Returns: (Success: bool, Result: orderNumber or Error Message)
+        """
+        try:
+            if self.db.is_connected():
+                self.cursor.fetchall()
+            
+            # Start Transaction
+            self.db.autocommit = False
+
+            self.cursor.execute("SELECT MAX(orderNumber) AS maxNum FROM orders")
+            res = self.cursor.fetchone()
+            next_order_id = (res["maxNum"] or 0) + 1
+
+            query_order = """
+                INSERT INTO orders (orderNumber, orderDate, requiredDate, status, comments, customerNumber)
+                VALUES (%s, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), 'In Process', 'Web Order', %s)
+            """
+            self.cursor.execute(query_order, (next_order_id, customer_number))
+
+            query_detail = """
+                INSERT INTO orderdetails (orderNumber, productCode, quantityOrdered, priceEach, orderLineNumber)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            line_number = 1
+            for code, item in cart_items.items():
+                self.cursor.execute(query_detail, (
+                    next_order_id, 
+                    code, 
+                    item["quantity"], 
+                    item["priceEach"], 
+                    line_number
+                ))
+                line_number += 1
+
+            # Commit Transaction
+            self.db.commit()
+            return True, next_order_id
+
+        except Exception as e:
+            self.db.rollback()
+            print(f"Transaction Error: {e}")
+            return False, str(e)
+            
+        finally:
+            self.db.autocommit = True
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()
