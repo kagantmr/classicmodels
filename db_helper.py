@@ -691,6 +691,24 @@ class DatabaseHandler:
         query = "UPDATE orders SET comments = %s WHERE orderNumber = %s"
         return self.execute_query(query, (new_comment, order_number))
 
+    def delete_order_permanently(self, order_number):
+        """
+        Hard Deletes an order. 
+        Database 'ON DELETE CASCADE' will automatically remove related orderdetails.
+        """
+        try:
+            query = "DELETE FROM orders WHERE orderNumber = %s"
+            
+            row_count = self.execute_query(query, (order_number,))
+            
+            if row_count and row_count > 0:
+                return True, f"Order #{order_number} permanently deleted."
+            else:
+                return False, "Order not found or could not be deleted."
+
+        except mysql.connector.Error as err:
+            return False, f"Database Error: {err}"
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()

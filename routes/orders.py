@@ -78,7 +78,8 @@ def init_order_routes(app, database):
             if order["customerNumber"] != user_number:
                 flash("You cannot cancel someone else's order.", "danger")
                 return redirect(url_for("customer_orders"))
-
+            
+            # customer can only cancel if "In Process"
             if order["status"] != "In Process":
                 flash("This order can no longer be cancelled.", "warning")
                 return redirect(url_for("order_detail", order_number=order_number))
@@ -88,9 +89,12 @@ def init_order_routes(app, database):
             (order_number,)
         )
         
-
         flash(f"Order #{order_number} has been cancelled.", "warning")
-        return redirect(url_for("order_detail", order_number=order_number))
+
+        if user_type == "employee":
+            return redirect(url_for("employee_view_customer_orders", customer_num=order['customerNumber']))
+        else:
+            return redirect(url_for("customer_orders"))
 
 
     @app.route("/order/item/<int:detail_id>/update", methods=["POST"])
@@ -146,13 +150,39 @@ def init_order_routes(app, database):
         remaining_items = db.get_order_details(order_number)
         
         if not remaining_items:
-            # The order is now empty. Autocancel it.
             db.execute_query(
                 "UPDATE orders SET status = 'Cancelled', comments = 'Auto-cancelled: All items removed.' WHERE orderNumber = %s",
                 (order_number,)
             )
-            flash(f"Order #{order_number} has been cancelled because it is empty.", "warning")
-            # Redirect to the dashboard/orders list, NOT the empty order page
-            return redirect(url_for("customer_orders"))
-        flash("Item removed from order.", "success")
+            flash(f"Order #{order_number} cancelled because it is empty.", "warning")
+
+        else:
+            flash("Item removed from order.", "success")
+
         return redirect(url_for("order_detail", order_number=order_number))
+
+
+    @app.route("/order/<int:order_number>/delete_permanent", methods=["POST"])
+    def delete_order_permanent(order_number):
+        if session.get("user_type") != "employee":
+            flash("Access denied.", "danger")
+            return redirect(url_for("order_detail", order_number=order_number))
+
+        order = db.get_order(order_number)
+        if not order:
+            flash("Order not found.", "danger")
+            return redirect(url_for("employee_dashboard"))
+
+        if order['status'] != 'Cancelled':
+            flash("Only cancelled orders can be permanently deleted.", "warning")
+            return redirect(url_for("order_detail", order_number=order_number))
+
+        # HARD DELETE
+        success, message = db.delete_order_permanently(order_number)
+        
+        if success:
+            flash(message, "success")
+            return redirect(url_for("employee_view_customer_orders", customer_num=order['customerNumber']))
+        else:
+            flash(message, "danger")
+            return redirect(url_for("order_detail", order_number=order_number))
