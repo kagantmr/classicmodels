@@ -131,14 +131,16 @@ def init_cart_routes(app, database):
             return redirect(url_for("view_cart"))
 
         customer_number = session.get("user_number")
+        
+        # take the comment from the form
+        comment = request.form.get("order_comments", "").strip()
 
-        # Execute atomic transaction
-        success, result = db.create_order_transaction(customer_number, cart)
+        success, result = db.create_order_transaction(customer_number, cart, comment)
 
         if success:
             session["cart"] = {} 
             flash(f"Order #{result} placed successfully!", "success")
-            return redirect(url_for("order_detail", order_number=result))
+            return redirect(url_for("customer_orders"))
         else:
             flash(f"Failed to place order. Error: {result}", "danger")
             return redirect(url_for("view_cart"))

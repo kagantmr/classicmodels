@@ -16,6 +16,27 @@
   </span>
 </p>
 
+<hr>   <div class="card mb-4">
+    <div class="card-header bg-light">
+        <strong>Order Comments / Notes</strong>
+    </div>
+    <div class="card-body">
+        {% if session.get('user_type') == 'employee' %}
+            <form action="{{ url_for('update_comment_route', order_number=order.orderNumber) }}" method="POST">
+                <div class="input-group">
+                    <textarea name="new_comment" class="form-control" rows="2">{{ order.comments or '' }}</textarea>
+                    <button class="btn btn-outline-primary" type="submit">Update Note</button>
+                </div>
+                <div class="form-text text-muted">Internal notes or updates regarding this order.</div>
+            </form>
+        {% else %}
+            <p class="mb-0 text-muted fst-italic">
+                {{ order.comments or 'No notes provided.' }}
+            </p>
+        {% endif %}
+    </div>
+</div>
+
 <hr>
 
 <h4>Items</h4>

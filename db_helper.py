@@ -65,14 +65,14 @@ class DatabaseHandler:
         """
         Fetches orders with sorting.
         sort_by: 'newest' (default) or 'oldest'
+        Uses orderNumber as a tie-breaker for same-day orders.
         """
         query = "SELECT * FROM orders WHERE customerNumber = %s"
         
-        # Safe against SQL injection because check parameters which coming from users
         if sort_by == 'oldest':
-            query += " ORDER BY orderDate ASC"  # old to new
+            query += " ORDER BY orderDate ASC, orderNumber ASC"
         else:
-            query += " ORDER BY orderDate DESC" # new to old
+            query += " ORDER BY orderDate DESC, orderNumber DESC"
 
         return self.execute_query(query, (customer_number,))
 
@@ -636,32 +636,34 @@ class DatabaseHandler:
         """
         return self.execute_query(query)
 
-    def create_order_transaction(self, customer_number, cart_items):
+    def create_order_transaction(self, customer_number, cart_items, comment=""):
         """
         Creates an order and its details atomically.
-        Returns: (Success: bool, Result: orderNumber or Error Message)
         """
         try:
             if self.db.is_connected():
                 self.cursor.fetchall()
             
-            # Start Transaction
             self.db.autocommit = False
 
             self.cursor.execute("SELECT MAX(orderNumber) AS maxNum FROM orders")
             res = self.cursor.fetchone()
             next_order_id = (res["maxNum"] or 0) + 1
 
+            # If empty comment, set default 
+            final_comment = comment if comment else "Web Order"
+
             query_order = """
                 INSERT INTO orders (orderNumber, orderDate, requiredDate, status, comments, customerNumber)
-                VALUES (%s, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), 'In Process', 'Web Order', %s)
+                VALUES (%s, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), 'In Process', %s, %s)
             """
-            self.cursor.execute(query_order, (next_order_id, customer_number))
+            self.cursor.execute(query_order, (next_order_id, final_comment, customer_number))
 
             query_detail = """
                 INSERT INTO orderdetails (orderNumber, productCode, quantityOrdered, priceEach, orderLineNumber)
                 VALUES (%s, %s, %s, %s, %s)
             """
+            
             line_number = 1
             for code, item in cart_items.items():
                 self.cursor.execute(query_detail, (
@@ -673,7 +675,6 @@ class DatabaseHandler:
                 ))
                 line_number += 1
 
-            # Commit Transaction
             self.db.commit()
             return True, next_order_id
 
@@ -684,6 +685,11 @@ class DatabaseHandler:
             
         finally:
             self.db.autocommit = True
+
+    def update_order_comment(self, order_number, new_comment):
+        """Updates the comment/notes of a specific order."""
+        query = "UPDATE orders SET comments = %s WHERE orderNumber = %s"
+        return self.execute_query(query, (new_comment, order_number))
 
     def close(self):
         """Closes the cursor and database connection."""

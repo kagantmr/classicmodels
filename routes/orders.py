@@ -8,6 +8,22 @@ def init_order_routes(app, database):
     global db
     db = database
 
+    @app.route("/order/<int:order_number>/update_comment", methods=["POST"])
+    def update_comment_route(order_number):
+        if session.get("user_type") != "employee":
+            flash("Access denied.", "danger")
+            return redirect(url_for("order_detail", order_number=order_number))
+
+        new_comment = request.form.get("new_comment", "").strip()
+        db.update_order_comment(order_number, new_comment)
+
+        order = db.get_order(order_number)
+        customer_num = order['customerNumber']
+
+        flash("Order note updated successfully.", "success")
+        
+        return redirect(url_for("employee_view_customer_orders", customer_num=customer_num))
+
     @app.route("/order/<int:order_number>")
     def order_detail(order_number):
         order = db.get_order(order_number)
