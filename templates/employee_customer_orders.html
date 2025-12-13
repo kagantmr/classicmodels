@@ -201,13 +201,15 @@
                             <td class="font-monospace text-muted">{{ p.checkNumber }}</td>
                             <td class="fw-bold text-success">${{ "{:,.2f}".format(p.amount) }}</td>
                             <td class="text-end pe-4">
-                                <a href="{{ url_for('edit_payment', customer_num=customer.customerNumber, check_num=p.checkNumber) }}" 
+                                <a href="{{ url_for('edit_payment', customer_number=customer.customerNumber, check_number=p.checkNumber) }}" 
                                    class="btn btn-sm btn-outline-warning me-1">
                                    Edit
                                 </a>
-                                <form action="{{ url_for('delete_payment') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure? This deletes the financial record.');">
-                                    <input type="hidden" name="customer_number" value="{{ customer.customerNumber }}">
-                                    <input type="hidden" name="check_number" value="{{ p.checkNumber }}">
+
+                                <form action="{{ url_for('delete_payment_route', customer_number=customer.customerNumber, check_number=p.checkNumber) }}" 
+                                      method="POST" 
+                                      class="d-inline" 
+                                      onsubmit="return confirm('Are you sure? This deletes the financial record.');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>
                             </td>

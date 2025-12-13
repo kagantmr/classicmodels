@@ -132,13 +132,18 @@ def init_employee_routes(app, database):
         balance = db.get_customer_balance(customer_num)
         payments = db.get_customer_payments(customer_num)
 
+        manager_number = session.get("user_number")
+        manager_details = db.get_employee_details(manager_number)
+        is_manager = "Manager" in manager_details['jobTitle'] or "President" in manager_details['jobTitle'] or "VP" in manager_details['jobTitle']
+
         # Add sort parameter to HTML and render 
         return render_template("employee_customer_orders.html",
                                customer=details,
                                orders=orders,
                                balance=balance,
                                payments=payments,
-                               sort_option=sort_option)
+                               sort_option=sort_option,
+                               is_manager=is_manager)
 
     @app.route("/create_report", methods=["POST"])
     def create_report():
@@ -207,3 +212,68 @@ def init_employee_routes(app, database):
         return render_template("office_stats.html", 
                                order_stats=order_stats, 
                                activity_stats=activity_stats)
+
+    @app.route("/payment/edit/<int:customer_number>/<string:check_number>", methods=["GET", "POST"])
+    def edit_payment(customer_number, check_number):
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+
+        payment = db.get_payment_details(customer_number, check_number)
+        if not payment:
+            flash("Payment not found.", "danger")
+            return redirect(url_for("employee_view_customer_orders", customer_num=customer_number))
+
+        if request.method == "POST":
+            new_amount = request.form.get("amount")
+            new_check_number = request.form.get("checkNumber") 
+
+            try:
+                db.update_payment(customer_number, check_number, new_check_number, new_amount)
+                flash("Payment updated successfully.", "success")
+                return redirect(url_for("employee_view_customer_orders", customer_num=customer_number))
+            except Exception as e:
+                flash(f"Error updating payment: {e}", "danger")
+
+        return render_template("edit_payment.html", payment=payment)
+
+    @app.route("/payment/delete/<int:customer_number>/<string:check_number>", methods=["POST"])
+    def delete_payment_route(customer_number, check_number):
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+
+        try:
+            db.delete_payment(customer_number, check_number)
+            flash("Payment deleted successfully.", "success")
+        except Exception as e:
+            flash(f"Error deleting payment: {e}", "danger")
+        
+        return redirect(url_for("employee_view_customer_orders", customer_num=customer_number))
+    
+    @app.route("/payment/analysis")
+    def payment_analysis_report():
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+        city_param = request.args.get("city", "").strip()
+        year_param = request.args.get("year", "").strip()
+        line_param = request.args.get("product_line", "").strip()
+
+        offices_list = db.get_all_offices()
+        lines_list = db.get_all_product_lines()
+
+
+        report_data = db.get_complex_payment_report(
+            city_filter=city_param, 
+            year_filter=year_param, 
+            product_line_filter=line_param
+        ) or []
+        
+        return render_template("payment_report.html", 
+                               report_data=report_data, 
+                               search_city=city_param, 
+                               search_year=year_param,
+                               search_line=line_param, 
+                               offices=offices_list,
+                               product_lines=lines_list)

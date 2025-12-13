@@ -218,16 +218,48 @@ class DatabaseHandler:
         total_payments = Decimal(str(result["total_payments"]))
         result["balance"] = total_orders - total_payments
         return result
+    
+    def get_all_product_lines(self):
+        return self.execute_query("SELECT productLine FROM productlines")
 
-    def get_employees_without_auth(self):
-        """Finds employees missing an entry in 'employee_auth'."""
+    def get_complex_payment_report(self, city_filter=None, year_filter=None, product_line_filter=None):
+        params = []
         query = """
-            SELECT e.employeeNumber
-            FROM employees e
-            LEFT JOIN employee_auth ea ON e.employeeNumber = ea.employeeNumber
-            WHERE ea.hashedPassword IS NULL
+            SELECT 
+                o.city AS office_city,
+                p.productName,
+                p.productLine, 
+                IFNULL(SUM(od.quantityOrdered * od.priceEach), 0) as total_revenue,
+                SUM(od.quantityOrdered) as total_units,
+                (SELECT AVG(quantityOrdered * priceEach) FROM orderdetails) as global_avg_revenue
+            FROM offices o
+            JOIN employees e ON o.officeCode = e.officeCode
+            LEFT JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+            LEFT JOIN orders ord ON c.customerNumber = ord.customerNumber
+            LEFT JOIN orderdetails od ON ord.orderNumber = od.orderNumber
+            LEFT JOIN products p ON od.productCode = p.productCode
+            WHERE 1=1
         """
-        return self.execute_query(query)
+        
+        if city_filter:
+            query += " AND o.city LIKE %s"
+            params.append(f"%{city_filter}%")
+            
+        if year_filter and year_filter.isdigit():
+            query += " AND (YEAR(ord.orderDate) = %s OR ord.orderDate IS NULL)"
+            params.append(year_filter)
+
+        if product_line_filter:
+            query += " AND p.productLine = %s"
+            params.append(product_line_filter)
+            
+        query += """
+            GROUP BY o.city, p.productName, p.productLine
+            ORDER BY total_revenue DESC
+            LIMIT 100
+        """
+        
+        return self.execute_query(query, tuple(params))
 
     def create_customer_auth(self, customer_number, hashed_password):
         """Inserts a new password record into 'customer_auth'."""

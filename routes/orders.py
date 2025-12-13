@@ -24,7 +24,7 @@ def init_order_routes(app, database):
         
         return redirect(url_for("employee_view_customer_orders", customer_num=customer_num))
 
-    @app.route("/order/<int:order_number>")
+    @app.route("/order/<int:order_number>") 
     def order_detail(order_number):
         order = db.get_order(order_number)
         if not order:
@@ -33,6 +33,12 @@ def init_order_routes(app, database):
 
         user_type = session.get("user_type")
         user_number = session.get("user_number")
+        
+        manager_details = db.get_employee_details(user_number)
+
+        is_manager = False
+        if manager_details and 'jobTitle' in manager_details:
+             is_manager = "Manager" in manager_details['jobTitle'] or "President" in manager_details['jobTitle'] or "VP" in manager_details['jobTitle']
 
         if user_type == "customer":
             if order["customerNumber"] != user_number:
@@ -41,12 +47,14 @@ def init_order_routes(app, database):
 
         elif user_type == "employee":
             customer_of_order = db.get_customer_details(order["customerNumber"])
-            if (
-                not customer_of_order 
-                or customer_of_order.get("salesRepEmployeeNumber") != user_number
-            ):
-                flash("Access denied. You are not the sales rep for this customer.", "danger")
-                return redirect(url_for("employee_dashboard"))
+
+            if not is_manager:
+                if (
+                    not customer_of_order 
+                    or customer_of_order.get("salesRepEmployeeNumber") != user_number
+                ):
+                    flash("Access denied. You are not the sales rep for this customer.", "danger")
+                    return redirect(url_for("employee_dashboard"))
 
         elif not user_type:
             flash("You must be logged in to view order details.", "danger")
@@ -54,11 +62,15 @@ def init_order_routes(app, database):
 
         order_items = db.get_order_details(order_number)
 
-        return render_template(
-            "order_detail.html",
-            order=order,
-            items=order_items
-        )
+        order_total = 0
+        if order_items:
+            for item in order_items:
+                order_total += item['quantityOrdered'] * item['priceEach']
+        return render_template("order_detail.html", 
+                               order=order,                
+                               order_items=order_items,    
+                               order_number=order_number, 
+                               order_total=order_total)  
 
     @app.route("/order/<int:order_number>/cancel", methods=["POST"])
     def cancel_order(order_number):
