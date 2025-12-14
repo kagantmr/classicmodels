@@ -58,8 +58,22 @@ def init_employee_routes(app, database):
         team_reports = db.get_subordinate_reports(employee_number)
         
         subordinates = []
+        analytics_matrix = []
+        unproductive_employees = []
+
+        # Analytics Pagination
+        analytics_page = request.args.get("analytics_page", 1, type=int)
+        limit = 10
+        offset = (analytics_page - 1) * limit
+
         if is_manager:
             subordinates = db.get_subordinates(employee_number)
+            try:
+                # New Analytics Features with Pagination
+                analytics_matrix = db.get_employee_performance_matrix(limit=limit, offset=offset)
+                unproductive_employees = db.get_unproductive_employees()
+            except Exception as e:
+                print(f"Analytics Error: {e}")
 
         return render_template("dashboard.html",
                                customers=customers,
@@ -68,6 +82,9 @@ def init_employee_routes(app, database):
                                my_reports=my_reports,
                                team_reports=team_reports,
                                subordinates=subordinates,
+                               analytics_matrix=analytics_matrix,
+                               unproductive_employees=unproductive_employees,
+                               analytics_page=analytics_page,
                                is_sales_rep=is_sales_rep,
                                is_manager=is_manager,
                                offices=offices)

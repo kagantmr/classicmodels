@@ -792,6 +792,53 @@ class DatabaseHandler:
         except mysql.connector.Error as err:
             return False, f"Database Error: {err}"
 
+    def get_employee_performance_matrix(self, limit=10, offset=0):
+        """
+        Complex Join (Employees -> Customers -> Orders -> OrderDetails -> Products) + Group By
+        Supports pagination.
+        """
+        query = """
+            SELECT 
+                e.firstName, 
+                e.lastName, 
+                p.productLine, 
+                SUM(od.quantityOrdered * od.priceEach) as revenue
+            FROM employees e
+            JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+            JOIN orders o ON c.customerNumber = o.customerNumber
+            JOIN orderdetails od ON o.orderNumber = od.orderNumber
+            JOIN products p ON od.productCode = p.productCode
+            WHERE e.jobTitle = 'Sales Rep'
+            GROUP BY e.employeeNumber, e.firstName, e.lastName, p.productLine
+            ORDER BY e.employeeNumber
+            LIMIT %s OFFSET %s
+        """
+        return self.execute_query(query, (limit, offset))
+
+    def get_unproductive_employees(self):
+        """
+        Outer Join (Employees left join Customers left join Orders)
+        Starts STRICTLY from 'employees' table.
+        Identifies Sales Reps with NO orders (or no customers).
+        """
+        query = """
+            SELECT 
+                e.employeeNumber, 
+                e.firstName, 
+                e.lastName, 
+                e.email, 
+                e.jobTitle,
+                COUNT(c.customerNumber) as customer_count,
+                COUNT(o.orderNumber) as order_count
+            FROM employees e
+            LEFT JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+            LEFT JOIN orders o ON c.customerNumber = o.customerNumber
+            WHERE e.jobTitle = 'Sales Rep'
+            GROUP BY e.employeeNumber, e.firstName, e.lastName, e.email, e.jobTitle
+            HAVING order_count = 0
+        """
+        return self.execute_query(query)
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()
