@@ -17,41 +17,80 @@ def init_product_routes(app, database):
             return False
         return True
 
-    # --- List all products with pagination ---
+     # --- List all products with pagination + filtering + sorting ---
     @app.route("/products")
     def products_list():
         if not _require_employee():
             return redirect(url_for("index"))
 
-        import math
-
-        # 1. Read pagination parameters
+        # 1) Read pagination parameters
         page = request.args.get("page", default=1, type=int)
         per_page = request.args.get("per_page", default=10, type=int)
-
-        # Allowed values
         if per_page not in [5, 10, 20, 50]:
             per_page = 10
-
         offset = (page - 1) * per_page
 
-        # 2. Count total number of products
-        row = db.execute_query("SELECT COUNT(*) AS cnt FROM products", fetchone=True)
-        total_items = row["cnt"]
+        # 2) Read filter/sort parameters
+        vendor = request.args.get("vendor", default="", type=str).strip()
+        line = request.args.get("line", default="", type=str).strip()
+        sort = request.args.get("sort", default="", type=str).strip()
+
+        # 3) Build WHERE dynamically (safe parameter binding)
+        where_clauses = ["1=1"]
+        params = []
+
+        if vendor:
+            where_clauses.append("productVendor = %s")
+            params.append(vendor)
+
+        if line:
+            where_clauses.append("productLine = %s")
+            params.append(line)
+
+        where_sql = " AND ".join(where_clauses)
+
+        # 4) Whitelist ORDER BY
+        sort_map = {
+            "buyPrice_asc": "buyPrice ASC",
+            "buyPrice_desc": "buyPrice DESC",
+            "stock_asc": "quantityInStock ASC",
+            "stock_desc": "quantityInStock DESC",
+            "name_asc": "productName ASC",
+            "name_desc": "productName DESC",
+        }
+        order_by = sort_map.get(sort, "productLine ASC, productName ASC")
+
+        # 5) Count total items WITH filters
+        count_row = db.execute_query(
+            f"SELECT COUNT(*) AS cnt FROM products WHERE {where_sql}",
+            tuple(params),
+            fetchone=True
+        )
+        total_items = count_row["cnt"]
         total_pages = max(1, math.ceil(total_items / per_page))
 
-        # 3. Fetch ONLY the current page of products
+        # 6) Fetch current page WITH filters + sorting
         products = db.execute_query(
-            """
+            f"""
             SELECT *
             FROM products
-            ORDER BY productLine, productName
+            WHERE {where_sql}
+            ORDER BY {order_by}
             LIMIT %s OFFSET %s
             """,
-            (per_page, offset),
+            tuple(params + [per_page, offset]),
         )
 
-        # 4. Render template
+        # 7) Dropdown options (for filters)
+        vendor_rows = db.execute_query(
+            "SELECT DISTINCT productVendor FROM products ORDER BY productVendor"
+        )
+        line_rows = db.execute_query(
+            "SELECT DISTINCT productLine FROM products ORDER BY productLine"
+        )
+        vendors = [r["productVendor"] for r in vendor_rows]
+        lines = [r["productLine"] for r in line_rows]
+
         return render_template(
             "products_list.html",
             products=products,
@@ -59,6 +98,11 @@ def init_product_routes(app, database):
             per_page=per_page,
             total_pages=total_pages,
             total_items=total_items,
+            vendor=vendor,
+            line=line,
+            sort=sort,
+            vendors=vendors,
+            lines=lines,
         )
 
     # --- Create new product ---

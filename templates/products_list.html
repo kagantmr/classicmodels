@@ -15,17 +15,42 @@
   </a>
 </div>
 
-<!-- Per-page selector -->
-<form method="get" class="mb-3">
-  <label>Show:</label>
-  <select name="per_page" onchange="this.form.submit()">
+<!-- Per-page + Filters + Sort -->
+<form method="get" class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+  <label class="me-1">Show:</label>
+  <select name="per_page" class="form-select w-auto" onchange="this.form.submit()">
     <option value="5"  {% if per_page == 5 %}selected{% endif %}>5</option>
     <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
     <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
     <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
   </select>
 
-  <!-- Reset to first page on per_page change -->
+  <!-- Vendor filter -->
+  <select name="vendor" class="form-select w-auto" onchange="this.form.submit()">
+    <option value="">All vendors</option>
+    {% for v in vendors %}
+      <option value="{{ v }}" {% if vendor == v %}selected{% endif %}>{{ v }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- Product line filter -->
+  <select name="line" class="form-select w-auto" onchange="this.form.submit()">
+    <option value="">All lines</option>
+    {% for l in lines %}
+      <option value="{{ l }}" {% if line == l %}selected{% endif %}>{{ l }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- Sort -->
+  <select name="sort" class="form-select w-auto" onchange="this.form.submit()">
+    <option value="" disabled {% if not sort %}selected{% endif %}>Sort by</option>
+    <option value="buyPrice_asc"  {% if sort == 'buyPrice_asc' %}selected{% endif %}>Buy Price ↑</option>
+    <option value="buyPrice_desc" {% if sort == 'buyPrice_desc' %}selected{% endif %}>Buy Price ↓</option>
+    <option value="stock_asc"     {% if sort == 'stock_asc' %}selected{% endif %}>In Stock ↑</option>
+    <option value="stock_desc"    {% if sort == 'stock_desc' %}selected{% endif %}>In Stock ↓</option>
+  </select>
+
+  <!-- Reset to first page on any change -->
   <input type="hidden" name="page" value="1">
 </form>
 
