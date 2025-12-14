@@ -103,6 +103,13 @@
               {% endif %}
             </a>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link{% if request.endpoint == 'feel_lucky' %} active{% endif %}"
+              href="{{ url_for('feel_lucky') }}">
+              🍀 Feel Lucky
+            </a>
+          </li>
           {% endif %}
           {% if session.get('user_number') %}
           <li class="nav-item dropdown">

@@ -219,6 +219,57 @@ class DatabaseHandler:
         result["balance"] = total_orders - total_payments
         return result
     
+    def feel_lucky(self):
+        query = """
+                SELECT
+                    COALESCE(o.city, off.city) AS city_to_visit,
+                    p.productName AS product_to_buy,
+                    p.productCode,
+                    CAST(FLOOR(RAND() * 100) AS SIGNED) + 1 AS lucky_number
+                FROM customers c
+
+                LEFT JOIN employees e
+                    ON c.salesRepEmployeeNumber = e.employeeNumber
+
+                LEFT JOIN offices o
+                    ON e.officeCode = o.officeCode
+
+                JOIN orders ord
+                    ON c.customerNumber = ord.customerNumber
+
+                JOIN orderdetails od
+                    ON ord.orderNumber = od.orderNumber
+
+                JOIN products p
+                    ON od.productCode = p.productCode
+
+                JOIN (
+                    SELECT city
+                    FROM offices
+                    ORDER BY RAND()
+                    LIMIT 1
+                ) off
+
+                WHERE ord.orderNumber = (
+                    SELECT orderNumber
+                    FROM orders
+                    ORDER BY RAND()
+                    LIMIT 1
+                )
+
+                GROUP BY
+                    o.city,
+                    off.city,
+                    p.productName,
+                    p.productCode
+
+                ORDER BY RAND()
+                LIMIT 1;
+
+
+        """
+        return self.execute_query(query)
+    
     def get_all_product_lines(self):
         return self.execute_query("SELECT productLine FROM productlines")
 

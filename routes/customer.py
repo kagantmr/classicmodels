@@ -257,3 +257,12 @@ def init_customer_routes(app, database):
 
         # GET request: Render the form
         return render_template("make_payment.html")
+    
+    @app.route("/feel-lucky")
+    def feel_lucky():
+        result = db.feel_lucky()
+        return render_template(
+            "feel_lucky.html",
+            lucky=result[0] if result else None
+        )
+

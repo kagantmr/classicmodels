@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow text-center">
+      <div class="card-body">
+        <h4 class="mb-3">🍀 Your Lucky Pick</h4>
+
+        {% if lucky %}
+          <p><strong>City to visit:</strong> {{ lucky.city_to_visit }}</p>
+          <p role="button" onclick="window.location.href='/product/{{ lucky.productCode }}'">
+            <strong>Product to buy:</strong>{{ lucky.product_to_buy }}
+           </p>
+
+          <p><strong>Lucky number:</strong> {{ lucky.lucky_number }}</p>
+        {% else %}
+          <p class="text-muted">No lucky result found.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
