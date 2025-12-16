@@ -143,10 +143,13 @@ def init_employee_routes(app, database):
             'status': request.args.getlist('status'),
             'categories': request.args.getlist('category'),
             'price_ranges': request.args.getlist('price'),
-            'sort_date': request.args.get('sort_date', 'newest')
+            'sort_date': request.args.get('sort_date', 'newest'),
+            'sort_option': request.args.get('sort_option', 'date_desc')
         }
 
         orders = db.get_filtered_orders(customer_num, filters)
+        customer = db.get_customer_details(customer_num)
+        product_lines = db.execute_query("SELECT productLine FROM productlines")
 
         page = request.args.get('page', 1, type=int)
         per_page = 7
@@ -158,14 +161,8 @@ def init_employee_routes(app, database):
         end = start + per_page
         orders = orders[start:end]
 
-        clean_args = request.args.copy()
-
-        if 'page' in clean_args:
-            clean_args.pop('page')
-
-        product_lines = db.execute_query("SELECT productLine FROM productlines")
-        
-        customer = db.get_customer_details(customer_num)
+        clean_args = request.args.to_dict(flat=False)
+        clean_args.pop('page', None)
 
         return render_template(
             "employee_customer_orders.html", 

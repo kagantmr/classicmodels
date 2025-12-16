@@ -876,69 +876,77 @@ class DatabaseHandler:
 
     def get_filtered_orders(self, customer_number, filters):
         """
-        Advanced Filtering with Dynamic SQL & Nested Queries.
-        Satisfies 'Nested Query' requirement for Price and Category filtering.
+        Retrieves orders for a customer based on multiple filters and sorting options.
+        Includes total amount and item summary for each order.
         """
-    
-        query = "SELECT * FROM orders WHERE customerNumber = %s"
+        query = """
+            SELECT 
+                o.orderNumber,
+                o.orderDate,
+                o.status,
+                o.shippedDate,
+                o.comments,
+                COALESCE(
+                    (SELECT SUM(quantityOrdered * priceEach) 
+                     FROM orderdetails 
+                     WHERE orderNumber = o.orderNumber), 
+                    0
+                ) as totalAmount,
+
+                (SELECT SUBSTRING_INDEX(GROUP_CONCAT(p.productName ORDER BY p.productName SEPARATOR ', '), ', ', 3)
+                 FROM orderdetails od
+                 JOIN products p ON od.productCode = p.productCode
+                 WHERE od.orderNumber = o.orderNumber) as items_summary,
+
+                (SELECT COUNT(*) 
+                 FROM orderdetails 
+                 WHERE orderNumber = o.orderNumber) as total_items
+
+            FROM orders o
+            WHERE o.customerNumber = %s
+        """
         params = [customer_number]
 
-        # status filter
         if filters.get('status'):
-            placeholders = ', '.join(['%s'] * len(filters['status']))
-            query += f" AND status IN ({placeholders})"
+            status_placeholders = ', '.join(['%s'] * len(filters['status']))
+            query += f" AND o.status IN ({status_placeholders})"
             params.extend(filters['status'])
 
-        # category filter
         if filters.get('categories'):
             cat_placeholders = ', '.join(['%s'] * len(filters['categories']))
             query += f"""
-                AND orderNumber IN (
-                    SELECT orderNumber 
-                    FROM orderdetails 
-                    WHERE productCode IN (
-                        SELECT productCode 
-                        FROM products 
-                        WHERE productLine IN ({cat_placeholders})
-                    )
+                AND o.orderNumber IN (
+                    SELECT DISTINCT od2.orderNumber
+                    FROM orderdetails od2
+                    JOIN products p2 ON od2.productCode = p2.productCode
+                    WHERE p2.productLine IN ({cat_placeholders})
                 )
             """
             params.extend(filters['categories'])
 
-        # price range filter
         if filters.get('price_ranges'):
             price_conditions = []
-            
             for rng in filters['price_ranges']:
-                if rng == '0-1000':
-                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 0 AND 1000")
-                elif rng == '1000-10000':
-                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 1000 AND 10000")
-                elif rng == '10000-50000':
-                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 10000 AND 50000")
-                elif rng == '50000-100000':
-                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 50000 AND 100000")
-                elif rng == '100000+':
-                    price_conditions.append("SUM(quantityOrdered * priceEach) > 100000")
+                if rng == '0-1000': price_conditions.append("totalAmount BETWEEN 0 AND 1000")
+                elif rng == '1000-10000': price_conditions.append("totalAmount BETWEEN 1000 AND 10000")
+                elif rng == '10000-50000': price_conditions.append("totalAmount BETWEEN 10000 AND 50000")
+                elif rng == '50000-100000': price_conditions.append("totalAmount BETWEEN 50000 AND 100000")
+                elif rng == '100000+': price_conditions.append("totalAmount > 100000")
             
             if price_conditions:
-                or_clause = " OR ".join(price_conditions)
-                query += f"""
-                    AND orderNumber IN (
-                        SELECT orderNumber 
-                        FROM orderdetails 
-                        GROUP BY orderNumber 
-                        HAVING {or_clause}
-                    )
-                """
-        # sort by date
-        sort_order = filters.get('sort_date', 'newest')
-        if sort_order == 'oldest':
-            query += " ORDER BY orderDate ASC, orderNumber ASC"
-        else:
-            query += " ORDER BY orderDate DESC, orderNumber DESC"
+                query += " HAVING (" + " OR ".join(price_conditions) + ")"
 
-        return self.execute_query(query, tuple(params))
+        sort_option = filters.get('sort_option', 'date_desc')
+        if sort_option == 'date_asc':
+            query += " ORDER BY o.orderDate ASC"
+        elif sort_option == 'price_asc':
+            query += " ORDER BY totalAmount ASC"
+        elif sort_option == 'price_desc':
+            query += " ORDER BY totalAmount DESC"
+        else:
+            query += " ORDER BY o.orderDate DESC"
+
+        return self.execute_query(query, params)
 
     def close(self):
         """Closes the cursor and database connection."""

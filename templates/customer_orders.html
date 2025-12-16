@@ -1,310 +1,354 @@
 {% extends "layout.html" %}
+
 {% block content %}
-
 <style>
-    .dashboard-header {
-        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-        color: white;
-        padding: 2rem;
+    body {
+        background-color: #1a1e2b; 
+        color: #e0e0e0;
+    }
+
+    .dashboard-title {
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .filter-btn-dark {
+        background-color: #2c3e50;
+        color: #fff;
+        border: 1px solid #34495e;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .filter-btn-dark:hover {
+        background-color: #34495e;
+        border-color: #4a6987;
+    }
+
+    .filter-dropdown-dark {
+        background-color: #252a37;
+        border: 1px solid #34495e;
         border-radius: 12px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-
-    .order-card {
-        border: none;
-        border-radius: 12px;
-        background: #fff;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        overflow: hidden;
-    }
-    
-    .order-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.12);
-    }
-
-    .card-header-custom {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #eee;
-        padding: 1rem 1.5rem;
-    }
-
-    .icon-muted { color: #adb5bd; }
-    
-    .status-border {
-        border-left: 6px solid transparent;
-    }
-    .status-Shipped { border-left-color: #198754; }
-    .status-Cancelled { border-left-color: #dc3545; }
-    .status-On-Hold { border-left-color: #ffc107; }
-    .status-In-Process { border-left-color: #0dcaf0; }
-    .status-Resolved { border-left-color: #0d6efd; }
-
-    .filter-btn {
-        background: transparent;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 8px 15px;
-        color: #555;
-        transition: all 0.3s;
-    }
-    .filter-btn:hover, .filter-btn[aria-expanded="true"] {
-        background: #f8f9fa;
-        color: #0d6efd;
-        border-color: #0d6efd;
-    }
-    .filter-dropdown {
-        background: #fff;
-        border: 1px solid #eee;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        color: #e0e0e0;
         padding: 20px;
         margin-top: 10px;
     }
+
     .filter-section-title {
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #888;
+        color: #8795a1;
         font-weight: 700;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #34495e;
+        padding-bottom: 6px;
+    }
+    
+    .form-check-input {
+        background-color: #34495e;
+        border-color: #4a6987;
     }
     .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
+        background-color: #3498db;
+        border-color: #3498db;
+    }
+    .form-check-label { color: #c0c0c0; }
+
+    .order-card-dark {
+        background-color: #252a37;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .order-card-dark:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    }
+
+    .card-header-dark {
+        background-color: #2c3140;
+        border-bottom: 1px solid #343a4d;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .order-number-label { font-size: 0.75rem; text-transform: uppercase; color: #8795a1; }
+    .order-number-val { font-size: 1.2rem; font-weight: 700; color: #fff; font-family: monospace; }
+    .order-date-val { color: #a0a0a0; font-size: 0.9rem; }
+
+    .order-total-section { text-align: right; }
+    .order-total-label { font-size: 0.75rem; text-transform: uppercase; color: #8795a1; display: block; }
+    .order-total-val { font-size: 1.3rem; font-weight: 700; color: #2ecc71; }
+
+    .card-body-dark {
+        padding: 1.5rem;
+        color: #c0c0c0;
+    }
+
+    .item-summary-label { font-weight: 600; color: #e0e0e0; margin-bottom: 0.5rem; display: block; }
+    .item-summary-text { 
+        font-style: italic; 
+        color: #a0a0a0; 
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .more-items-badge { background-color: #34495e; color: #fff; font-size: 0.75rem; }
+
+    .badge-shipped { background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+    .badge-cancelled { background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
+    .badge-process { background-color: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid #3498db; }
+    .badge-hold { background-color: rgba(241, 196, 15, 0.2); color: #f1c40f; border: 1px solid #f1c40f; }
+    .badge-default { background-color: rgba(149, 165, 166, 0.2); color: #95a5a6; border: 1px solid #95a5a6; }
+
+    .btn-details {
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        font-weight: 600;
+        padding: 0.5rem 1.2rem;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+    .btn-details:hover { background-color: #2980b9; color: #fff; }
+
+    .pagination .page-link {
+        background-color: #252a37;
+        border-color: #34495e;
+        color: #e0e0e0;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #3498db;
+        border-color: #3498db;
+        color: #fff;
+    }
+    .pagination .page-item.disabled .page-link {
+        background-color: #1a1e2b;
+        color: #6c757d;
     }
 </style>
 
-<div class="container mt-4 mb-5">
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4 mb-0">
-        <i class="bi bi-box-seam me-2"></i>My Orders
-    </h2>
+<div class="container mt-5 mb-5">
     
-    <button class="filter-btn d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false">
-    <img src="{{ url_for('static', filename='images/filter.png') }}" 
-         alt="Filter" 
-         style="width: 20px; height: 20px; margin-right: 8px;">Filter Orders
-    </button>
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
+        <div>
+            <h2 class="dashboard-title mb-1">Welcome for your orders {{customer.customerName}}</h2>
+            <p class="mb-0" style="color: #ced4da; letter-spacing: 0.5px;">View and track your order history</p>
 
-</div>
+        </div>
+        <button class="btn filter-btn-dark d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false">
+            <img src="{{ url_for('static', filename='images/filter.png') }}" 
+                 alt="Filter" 
+                 style="width: 20px; height: 20px; margin-right: 10px; filter: invert(1);"> Filter & Sort
+        </button>
+    </div>
 
-<div class="collapse mb-4" id="filterPanel">
-    <div class="filter-dropdown">
-        <form action="{{ url_for('customer_orders') }}" method="GET">
-            <div class="row g-4">
-                
-                <div class="col-md-3">
-                    <div class="filter-section-title">By Category</div>
-                    <div style="max-height: 150px; overflow-y: auto;">
-                        {% for line in product_lines %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="category" 
-                                   value="{{ line.productLine }}" id="cat_{{ loop.index }}"
-                                   {% if line.productLine in current_filters.categories %}checked{% endif %}>
-                            <label class="form-check-label small" for="cat_{{ loop.index }}">
-                                {{ line.productLine }}
+    <div class="collapse mb-5" id="filterPanel">
+        <div class="filter-dropdown-dark">
+            <form action="{{ url_for('customer_orders') }}" method="GET">
+                <div class="row g-4">
+                    
+                    <div class="col-md-3">
+                        <div class="filter-section-title">
+                            <i class="bi bi-sort-down me-1"></i> Sort By
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="sort_option" value="date_desc" id="sort_date_desc"
+                                   {% if current_filters.sort_option == 'date_desc' %}checked{% endif %}>
+                            <label class="form-check-label" for="sort_date_desc">Date: Newest First</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="sort_option" value="date_asc" id="sort_date_asc"
+                                   {% if current_filters.sort_option == 'date_asc' %}checked{% endif %}>
+                            <label class="form-check-label" for="sort_date_asc">Date: Oldest First</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="sort_option" value="price_desc" id="sort_price_desc"
+                                   {% if current_filters.sort_option == 'price_desc' %}checked{% endif %}>
+                            <label class="form-check-label" for="sort_price_desc">Price: High to Low</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="sort_option" value="price_asc" id="sort_price_asc"
+                                   {% if current_filters.sort_option == 'price_asc' %}checked{% endif %}>
+                            <label class="form-check-label" for="sort_price_asc">Price: Low to High</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="filter-section-title">By Category</div>
+                        <div style="max-height: 180px; overflow-y: auto; padding-right: 5px;">
+                            {% for line in product_lines %}
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="category" 
+                                       value="{{ line.productLine }}" id="cat_{{ loop.index }}"
+                                       {% if line.productLine in current_filters.categories %}checked{% endif %}>
+                                <label class="form-check-label small" for="cat_{{ loop.index }}">
+                                    {{ line.productLine }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="filter-section-title">By Price Range</div>
+                        {% set ranges = ['0-1000', '1000-10000', '10000-50000', '50000-100000', '100000+'] %}
+                        {% for rng in ranges %}
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="price" 
+                                   value="{{ rng }}" id="price_{{ loop.index }}"
+                                   {% if rng in current_filters.price_ranges %}checked{% endif %}>
+                            <label class="form-check-label small" for="price_{{ loop.index }}">
+                                $ {{ rng }}
                             </label>
                         </div>
                         {% endfor %}
                     </div>
-                </div>
 
-                <div class="col-md-3">
-                    <div class="filter-section-title">By Price</div>
-                    {% set ranges = ['0-1000', '1000-10000', '10000-50000', '50000-100000', '100000+'] %}
-                    {% for rng in ranges %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="price" 
-                               value="{{ rng }}" id="price_{{ loop.index }}"
-                               {% if rng in current_filters.price_ranges %}checked{% endif %}>
-                        <label class="form-check-label small" for="price_{{ loop.index }}">
-                            $ {{ rng }}
-                        </label>
+                    <div class="col-md-3">
+                        <div class="filter-section-title">By Status</div>
+                        {% set statuses = ['In Process', 'Shipped', 'Cancelled', 'Resolved', 'Disputed', 'On Hold'] %}
+                        <div class="mb-3">
+                            {% for stat in statuses %}
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="status" 
+                                       value="{{ stat }}" id="stat_{{ loop.index }}"
+                                       {% if stat in current_filters.status %}checked{% endif %}>
+                                <label class="form-check-label small" for="stat_{{ loop.index }}">
+                                    {{ stat }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            <a href="{{ url_for('customer_orders') }}" class="btn btn-outline-secondary">Clear All</a>
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
 
-                <div class="col-md-3">
-                    <div class="filter-section-title">By Status</div>
-                    {% set statuses = ['In Process', 'Shipped', 'Cancelled', 'Resolved', 'Disputed', 'On Hold'] %}
-                    {% for stat in statuses %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="status" 
-                               value="{{ stat }}" id="stat_{{ loop.index }}"
-                               {% if stat in current_filters.status %}checked{% endif %}>
-                        <label class="form-check-label small" for="stat_{{ loop.index }}">
-                            {{ stat }}
-                        </label>
-                    </div>
-                    {% endfor %}
                 </div>
+            </form>
+        </div>
+    </div>
 
-                <div class="col-md-3">
-                    <div class="filter-section-title">By Date</div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="sort_date" 
-                               value="newest" id="sort_new"
-                               {% if current_filters.sort_date == 'newest' %}checked{% endif %}>
-                        <label class="form-check-label small" for="sort_new">
-                            Newest First <i class="bi bi-arrow-down"></i>
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="sort_date" 
-                               value="oldest" id="sort_old"
-                               {% if current_filters.sort_date == 'oldest' %}checked{% endif %}>
-                        <label class="form-check-label small" for="sort_old">
-                            Oldest First <i class="bi bi-arrow-up"></i>
-                        </label>
+    {% if orders %}
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-12">
+            <div class="card order-card-dark">
+                
+                <div class="card-header-dark">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            {% if order.status == 'Shipped' %}<span class="badge badge-shipped p-2"><i class="bi bi-truck fs-5"></i></span>
+                            {% elif order.status == 'Cancelled' %}<span class="badge badge-cancelled p-2"><i class="bi bi-x-circle fs-5"></i></span>
+                            {% elif order.status == 'In Process' %}<span class="badge badge-process p-2"><i class="bi bi-hourglass-split fs-5"></i></span>
+                            {% elif order.status == 'On Hold' %}<span class="badge badge-hold p-2"><i class="bi bi-pause-circle fs-5"></i></span>
+                            {% else %}<span class="badge badge-default p-2"><i class="bi bi-circle fs-5"></i></span>{% endif %}
+                        </div>
+                        <div>
+                            <span class="order-number-label">Order Number</span>
+                            <div class="order-number-val">#{{ order.orderNumber }}</div>
+                            <div class="order-date-val">
+                                <i class="bi bi-calendar3 me-1"></i> {{ order.orderDate.strftime('%d %b, %Y') }}
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="mt-3 pt-3 border-top">
-                        <button type="submit" class="btn btn-primary btn-sm w-100">
-                            Apply Filters
-                        </button>
-                        <a href="{{ url_for('customer_orders') }}" class="btn btn-link btn-sm w-100 text-muted mt-1" style="text-decoration: none;">
-                            Clear All
+                    <div class="order-total-section">
+                        <span class="order-total-label">Total Amount</span>
+                        <div class="order-total-val">
+                            ${{ "{:,.2f}".format(order.totalAmount) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body-dark d-flex justify-content-between align-items-center">
+                    
+                    <div class="flex-grow-1 me-4">
+                        <span class="item-summary-label">
+                            <i class="bi bi-box-seam me-1"></i> Order Summary
+                            <span class="badge more-items-badge ms-2">{{ order.total_items }} Items</span>
+                        </span>
+                        <p class="item-summary-text mb-0">
+                            {{ order.items_summary }}
+                            {% if order.total_items > 3 %}... and more{% endif %}
+                        </p>
+                    </div>
+
+                    <div class="text-end" style="min-width: 150px;">
+                        <div class="mb-2">
+                            <span class="small text-uppercase" style="color: #ced4da; font-weight: 600; letter-spacing: 0.5px;">Status:</span>
+                            {% if order.status == 'Shipped' %}<span class="badge badge-shipped ms-1">Shipped</span>
+                            {% elif order.status == 'Cancelled' %}<span class="badge badge-cancelled ms-1">Cancelled</span>
+                            {% elif order.status == 'In Process' %}<span class="badge badge-process ms-1">In Process</span>
+                            {% elif order.status == 'On Hold' %}<span class="badge badge-hold ms-1">On Hold</span>
+                            {% else %}<span class="badge badge-default ms-1">{{ order.status }}</span>{% endif %}
+                        </div>
+                        <a href="{{ url_for('order_detail', order_number=order.orderNumber) }}" class="btn btn-details">
+                            View Details <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
                 </div>
+
             </div>
-        </form>
-    </div>
-</div>
-
-    {% if orders %}
-    <div class="row g-4"> {% for order in orders %}
-        <div class="col-12">
-            
-            <a href="{{ url_for('order_detail', order_number=order.orderNumber) }}" class="text-decoration-none text-dark">
-                <div class="card order-card shadow-sm status-{{ order.status | replace(' ', '-') }} status-border">
-                    
-                    <div class="card-header-custom d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-white p-2 rounded-circle shadow-sm me-3 text-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-box-seam" viewBox="0 0 16 16">
-                                  <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-1.187 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-uppercase small text-muted">Order Number</h6>
-                                <span class="fs-5 fw-bold font-monospace">#{{ order.orderNumber }}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="text-end">
-                            <small class="text-muted d-block">Order Date</small>
-                            <span class="fw-semibold">
-                                <i class="bi bi-calendar3 me-1"></i> {{ order.orderDate.strftime('%d %b, %Y') }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="card-body p-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-6 mb-3 mb-md-0">
-                                <span class="text-muted small">Status:</span>
-                                <div class="mt-1">
-                                    {% if order.status == 'Shipped' %}
-                                        <span class="badge rounded-pill bg-success px-3 py-2">
-                                            ✅ Shipped
-                                        </span>
-                                        {% if order.shippedDate %}
-                                            <small class="text-success ms-2 fw-bold">on {{ order.shippedDate.strftime('%d %b') }}</small>
-                                        {% endif %}
-                                    
-                                    {% elif order.status == 'Cancelled' %}
-                                        <span class="badge rounded-pill bg-danger px-3 py-2">🚫 Cancelled</span>
-                                    
-                                    {% elif order.status == 'In Process' %}
-                                        <span class="badge rounded-pill bg-info text-dark px-3 py-2">⏳ In Process</span>
-                                    
-                                    {% elif order.status == 'On Hold' %}
-                                        <span class="badge rounded-pill bg-warning text-dark px-3 py-2">✋ On Hold</span>
-                                    
-                                    {% else %}
-                                        <span class="badge rounded-pill bg-secondary px-3 py-2">{{ order.status }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="col-md-4 mb-3 mb-md-0">
-                                {% if order.comments %}
-                                    <div class="d-flex text-muted small fst-italic bg-light p-2 rounded">
-                                        <div class="me-2">💬</div>
-                                        <div class="text-truncate">{{ order.comments }}</div>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-2 text-md-end">
-                                <span class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                    Details &rarr;
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
         </div>
         {% endfor %}
     </div>
 
+    
+    {% if total_pages > 1 %}
+    <nav aria-label="Order navigation" class="mt-5">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link border-0 shadow-sm rounded-circle mx-1 d-flex align-items-center justify-content-center" 
+                   href="{{ url_for(request.endpoint, page=page-1, **clean_args) }}" 
+                   style="width: 40px; height: 40px;">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link border-0 shadow-sm rounded-circle mx-1 d-flex align-items-center justify-content-center" 
+                   href="{{ url_for(request.endpoint, page=p, **clean_args) }}"
+                   style="width: 40px; height: 40px;">
+                   {{ p }}
+                </a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                <a class="page-link border-0 shadow-sm rounded-circle mx-1 d-flex align-items-center justify-content-center" 
+                   href="{{ url_for(request.endpoint, page=page+1, **clean_args) }}" 
+                   style="width: 40px; height: 40px;">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+        <div class="text-center small mt-2" style="color: #adb5bd;">
+            Showing page {{ page }} of {{ total_pages }} (Total {{ total_orders }} orders)
+        </div>
+    </nav>
+    {% endif %}
+
     {% else %}
-    <div class="card border-0 shadow-sm text-center py-5">
-        <div class="card-body">
-            <div class="mb-3 text-secondary" style="font-size: 4rem; opacity: 0.2;">🛒</div>
-            <h3 class="text-muted fw-bold">No orders yet</h3>
-            <p class="text-secondary mb-4">It looks like you haven't made any purchases.</p>
-            <a href="{{ url_for('productlines') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
-                Start Shopping
-            </a>
+    <div class="card order-card-dark text-center py-5">
+        <div class="card-body-dark">
+            <i class="bi bi-cart-x fs-1 text-muted mb-3 d-block"></i>
+            <h3 class="text-white fw-bold">No orders found</h3>
+            <p class="text-muted mb-4">Try adjusting your filters or check back later.</p>
+            <a href="{{ url_for('customer_orders') }}" class="btn btn-outline-light">Clear Filters</a>
         </div>
     </div>
     {% endif %}
+
 </div>
-
-{% if total_pages > 1 %}
-<nav aria-label="Order navigation" class="mt-5">
-    <ul class="pagination justify-content-center">
-        
-        <li class="page-item {% if page == 1 %}disabled{% endif %}">
-            <a class="page-link border-0 shadow-sm rounded-circle mx-1" 
-               href="{{ url_for(request.endpoint, page=page-1, **clean_args) }}" 
-               aria-label="Previous" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                <span aria-hidden="true">&laquo;</span>
-            </a>
-        </li>
-
-        {% for p in range(1, total_pages + 1) %}
-        <li class="page-item {% if p == page %}active{% endif %}">
-            <a class="page-link border-0 shadow-sm rounded-circle mx-1" 
-               href="{{ url_for(request.endpoint, page=p, **clean_args) }}"
-               style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-               {{ p }}
-            </a>
-        </li>
-        {% endfor %}
-
-        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-            <a class="page-link border-0 shadow-sm rounded-circle mx-1" 
-               href="{{ url_for(request.endpoint, page=page+1, **clean_args) }}" 
-               aria-label="Next" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                <span aria-hidden="true">&raquo;</span>
-            </a>
-        </li>
-    </ul>
-    
-    <div class="text-center text-muted small mt-2">
-        Showing page {{ page }} of {{ total_pages }} (Total {{ total_orders }} orders)
-    </div>
-</nav>
-{% endif %}
-
 {% endblock %}

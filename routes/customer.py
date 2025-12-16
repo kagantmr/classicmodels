@@ -34,22 +34,26 @@ def init_customer_routes(app, database):
         )
 
     @app.route("/customer/orders")
-    def customer_orders():
+    def customer_orders(): 
         if session.get("user_type") != "customer":
+            flash("Access denied.", "danger")
             return redirect(url_for("login"))
 
         customer_number = session.get("user_number")
-        
+
         filters = {
-            'status': request.args.getlist('status'),       
-            'categories': request.args.getlist('category'), 
-            'price_ranges': request.args.getlist('price'),  
-            'sort_date': request.args.get('sort_date', 'newest') 
+            'status': request.args.getlist('status'),
+            'categories': request.args.getlist('category'),
+            'price_ranges': request.args.getlist('price'),
+            'sort_date': request.args.get('sort_date', 'newest'),
+            'sort_option': request.args.get('sort_option', 'date_desc')
         }
 
-        # take filtered orders from DB
+        customer = db.get_customer_details(customer_number)
+
         orders = db.get_filtered_orders(customer_number, filters)
 
+        #Pagination
         page = request.args.get('page', 1, type=int)
         per_page = 7
 
@@ -58,27 +62,27 @@ def init_customer_routes(app, database):
 
         start = (page - 1) * per_page
         end = start + per_page
-        current_orders = orders[start:end]
+        orders = orders[start:end]
 
-        clean_args = request.args.copy()
+        # Clean args for pagination links
+        clean_args = request.args.to_dict(flat=False)
+        clean_args.pop('page', None)
 
-        if 'page' in clean_args:
-            clean_args.pop('page')
-
-        # for filter options
         product_lines = db.execute_query("SELECT productLine FROM productlines")
 
         return render_template(
-            "customer_orders.html", 
-            orders=current_orders,
+            "customer_orders.html",
+            orders=orders,
             product_lines=product_lines,
             current_filters=filters,
+            customer=customer,
+            customer_num=customer_number,
             page=page,
             total_pages=total_pages,
             total_orders=total_orders,
-            clean_args=clean_args,
-            customer_num=customer_number
-        )
+            clean_args=clean_args
+    )
+
     
     @app.route("/customer/signup", methods=["GET","POST"])
     def customer_signup():
