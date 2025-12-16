@@ -683,39 +683,74 @@ class DatabaseHandler:
 
     def get_office_order_stats(self):
         """
-        Complex Join 4+ Tables, Group By
-        Returns the total order numbers based on office.
+        Retreives stats per office including Total Sales Volume using a NESTED QUERY.
+        Structure: Office -> Employees -> Customers -> Orders -> OrderDetails
         """
         query = """
             SELECT 
-                o.city, 
+                o.officeCode,
+                o.city,
                 o.country,
-                COUNT(ord.orderNumber) as total_orders,
-                MAX(ord.orderDate) as last_order_date
+                (SELECT COUNT(*) 
+                 FROM orders ord
+                 JOIN customers c ON ord.customerNumber = c.customerNumber
+                 JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
+                 WHERE e.officeCode = o.officeCode
+                ) as total_orders,
+                
+                (SELECT MAX(ord.orderDate)
+                 FROM orders ord
+                 JOIN customers c ON ord.customerNumber = c.customerNumber
+                 JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
+                 WHERE e.officeCode = o.officeCode
+                ) as last_activity,
+
+                COALESCE(
+                    (SELECT SUM(od.quantityOrdered * od.priceEach)
+                     FROM orderdetails od
+                     JOIN orders ord ON od.orderNumber = ord.orderNumber
+                     JOIN customers c ON ord.customerNumber = c.customerNumber
+                     JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
+                     WHERE e.officeCode = o.officeCode
+                    ), 0
+                ) as total_sales
             FROM offices o
-            JOIN employees e ON o.officeCode = e.officeCode
-            JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
-            JOIN orders ord ON c.customerNumber = ord.customerNumber
-            GROUP BY o.officeCode, o.city, o.country
-            ORDER BY total_orders DESC
+            ORDER BY total_sales DESC
         """
         return self.execute_query(query)
 
     def get_offices_activity_report(self):
         """
-        Outer Join
-        Shows even offices with no customers (thanks to LEFT JOIN)
+        Retrieves workforce activity.
+        Fixes: Fetches Territory, Active Counts, and Manager Names correctly using Subqueries.
         """
         query = """
             SELECT 
                 o.city,
-                o.country,
-                COUNT(c.customerNumber) as customer_count
+                o.territory, -- Territory verisini buradan çekiyoruz
+                
+                (SELECT COUNT(*) 
+                 FROM employees e 
+                 WHERE e.officeCode = o.officeCode
+                ) as active_employees,
+
+                (SELECT COUNT(*)
+                 FROM customers c
+                 JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
+                 WHERE e.officeCode = o.officeCode
+                ) as customer_count,
+
+                COALESCE(
+                    (SELECT CONCAT(firstName, ' ', lastName)
+                     FROM employees e
+                     WHERE e.officeCode = o.officeCode 
+                     AND (jobTitle LIKE '%Manager%' OR jobTitle LIKE '%VP%' OR jobTitle LIKE '%President%')
+                     LIMIT 1
+                    ), 'Regional Lead'
+                ) as managers
+                
             FROM offices o
-            LEFT JOIN employees e ON o.officeCode = e.officeCode
-            LEFT JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
-            GROUP BY o.officeCode, o.city, o.country
-            ORDER BY customer_count DESC
+            ORDER BY active_employees DESC
         """
         return self.execute_query(query)
 

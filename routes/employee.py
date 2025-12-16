@@ -206,27 +206,19 @@ def init_employee_routes(app, database):
 
     @app.route("/office/statistics")
     def office_statistics():
-        # Security check
         if session.get("user_type") != "employee":
-            flash("Access Denied.", "danger")
             return redirect(url_for("login"))
 
-        # Authority check (check job title in session)
-        job_title = session.get("job_title", "")
-        is_manager = "Manager" in job_title or "President" in job_title or "VP" in job_title
 
-        if not is_manager:
-            flash("Only Management can view Office Statistics.", "warning")
-            return redirect(url_for("employee_dashboard"))
-
-        # Complex Join
         order_stats = db.get_office_order_stats()
-        # Outer Join 
         activity_stats = db.get_offices_activity_report()
+
+        grand_total_sales = sum(item['total_sales'] for item in order_stats) if order_stats else 0
 
         return render_template("office_stats.html", 
                                order_stats=order_stats, 
-                               activity_stats=activity_stats)
+                               activity_stats=activity_stats,
+                               grand_total_sales=grand_total_sales)
 
     @app.route("/payment/edit/<int:customer_number>/<string:check_number>", methods=["GET", "POST"])
     def edit_payment(customer_number, check_number):

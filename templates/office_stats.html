@@ -1,162 +1,297 @@
 {% extends "layout.html" %}
+
 {% block content %}
-
 <style>
-    .dashboard-header {
-        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-        color: white;
-        padding: 2.5rem;
-        border-radius: 16px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-
-    .stats-card {
-        border: none;
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-        transition: transform 0.2s ease;
-        overflow: hidden;
-        margin-bottom: 2.5rem;
-    }
-    .stats-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-    }
-
-    .table-header-custom th {
+    .stats-wrapper {
         background-color: #f8f9fa;
-        color: #2c3e50;
-        font-weight: 800;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 1.2rem 1rem;
-        border-bottom: 2px solid #ced4da;
-        border-right: 1px solid #dee2e6;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+        border-radius: 8px;
+    }
+
+    .clean-card {
+        background: #ffffff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+        padding: 0; 
+        overflow: hidden; 
+        height: 100%;
     }
     
-    .table-header-custom th:first-child { border-left: none; }
-    .table-header-custom th:last-child { border-right: none; }
+    .card-header-clean {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f1f3f5;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-    td {
-        padding: 1.2rem 1rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #e9ecef; 
-        border-right: 1px solid #f1f3f5;  
+    .card-body-clean {
+        padding: 24px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #343a40;
+        margin-bottom: 0;
+    }
+
+    .table-header-clean th {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #868e96;
+        font-weight: 600;
+        border-bottom: 2px solid #f1f3f5;
+        padding-bottom: 12px;
+        padding-top: 12px;
+    }
+
+    .table-row-clean td {
+        padding: 16px 12px;
+        border-bottom: 1px solid #f8f9fa;
         color: #495057;
+        vertical-align: middle;
         font-size: 0.95rem;
     }
     
-    td:last-child { border-right: none; }
+    .table-row-clean:last-child td {
+        border-bottom: none;
+    }
 
-    .table-hover tbody tr:hover {
-        background-color: #f8f9fa;
+    .font-mono {
+        font-family: 'SF Mono', 'Menlo', Monaco, Consolas, monospace;
+        letter-spacing: -0.3px;
+    }
+
+    .stat-money {
+        color: #0ca678; 
+        font-weight: 700;
+    }
+
+    .stat-date {
+        color: #adb5bd;
+        font-size: 0.85rem;
+    }
+    
+    .total-revenue-badge {
+        text-align: right;
+    }
+    .total-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #868e96;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .total-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #212529;
+        font-family: 'SF Mono', 'Menlo', Monaco, Consolas, monospace;
+    }
+
+    .manager-name { font-weight: 600; color: #343a40; }
+    .manager-na { color: #dee2e6; font-style: italic; font-weight: 400; }
+    .territory-tag {
+        background-color: #f1f3f5;
+        color: #495057;
+        width: 80px; 
+        text-align: center;
+        padding: 4px 0; 
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
     }
 </style>
 
-<div class="container mt-4 mb-5">
-
-    <div class="mb-3">
-        <a href="{{ url_for('employee_dashboard') }}" class="text-decoration-none text-muted small fw-bold">
-            &larr; Back to Dashboard
-        </a>
-    </div>
-
-    <div class="dashboard-header d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="fw-bold mb-2">📊 Office Statistics</h1>
-            <p class="mb-0 opacity-75 lead" style="font-size: 1.1rem;">
-                Global performance metrics and activity reports.
-            </p>
-        </div>
-        <div class="d-none d-md-block text-white opacity-50 display-4">
-            <i class="bi bi-buildings"></i>
-        </div>
-    </div>
-
-    <div class="stats-card">
-        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
-            <h5 class="fw-bold text-dark mb-0">
-                <i class="bi bi-graph-up-arrow text-primary me-2"></i>Order Volume by Office
-            </h5>
-            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">Sales Performance</span>
-        </div>
+<div class="stats-wrapper">
+    <div class="container-fluid px-4">
         
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-header-custom">
-                    <tr>
-                        <th class="ps-4">Office City</th>
-                        <th>Country</th>
-                        <th class="text-center">Total Orders</th>
-                        <th class="text-end pe-4">Last Activity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stat in order_stats %}
-                    <tr>
-                        <td class="ps-4 fw-bold text-dark">{{ stat.city }}</td>
-                        <td class="text-secondary">{{ stat.country }}</td>
-                        <td class="text-center text-success fw-bold fs-5">
-                            {{ stat.total_orders }}
-                        </td>
-                        <td class="text-end pe-4 text-muted font-monospace small">
-                            {{ stat.last_order_date }}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="4" class="text-center py-4 text-muted">No data available.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="mb-4">
+            <h2 class="h4 fw-bold text-dark mb-1">Office Analytics</h2>
+            <p class="text-muted small mb-0">Performance metrics & workforce distribution</p>
         </div>
+
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="clean-card">
+                    <div class="card-header-clean">
+                        <h5 class="section-title"> FINANCIAL  PERFORMANCE</h5>
+                        
+                        <div class="total-revenue-badge">
+                            <span class="total-label">Total Revenue</span>
+                            <span class="total-value">${{ "{:,.2f}".format(grand_total_sales) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body-clean">
+                        <div class="row align-items-center">
+                            
+                            <div class="col-lg-7 border-end pe-lg-4">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-borderless align-middle mb-0">
+                                        <thead class="table-header-clean">
+                                            <tr>
+                                                <th class="ps-2">Location</th>
+                                                <th class="text-center">Total Orders</th>
+                                                <th class="text-end">Sales Volume</th>
+                                                <th class="text-end pe-2">Last Activity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for stat in order_stats %}
+                                            <tr class="table-row-clean">
+                                                <td class="ps-2">
+                                                    <div class="fw-bold text-dark">{{ stat.city }}</div>
+                                                    <div class="text-muted small" style="font-size: 0.8rem;">{{ stat.country }}</div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-bold text-dark font-mono fs-6">{{ stat.total_orders }}</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="stat-money font-mono">${{ "{:,.2f}".format(stat.total_sales) }}</span>
+                                                </td>
+                                                <td class="text-end pe-2">
+                                                    <span class="stat-date font-mono">
+                                                        {% if stat.last_activity %}
+                                                            {{ stat.last_activity.strftime('%Y-%m-%d') }}
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5 ps-lg-4 mt-4 mt-lg-0">
+                                <h6 class="text-uppercase text-muted fw-bold mb-4 small text-center" style="letter-spacing: 1px;">DISTRIBUTION OF REVENUE</h6>
+                                <div style="position: relative; height: 300px; width: 100%;">
+                                    <canvas id="salesPieChart"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="clean-card">
+                    <div class="card-header-clean">
+                        <h5 class="section-title">Workforce Overview</h5>
+                    </div>
+                    
+                    <div class="card-body-clean">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-borderless align-middle mb-0">
+                                <thead class="table-header-clean">
+                                    <tr>
+                                        <th class="ps-2">Office</th>
+                                        <th>Regional Manager</th>
+                                        <th class="text-center">Active Staff</th>
+                                        <th class="text-center">Client Base</th>
+                                        <th class="text-end pe-2">Territory</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for act in activity_stats %}
+                                    <tr class="table-row-clean">
+                                        <td class="ps-2 fw-bold text-dark">{{ act.city }}</td>
+                                        <td>
+                                            {% if 'N/A' in act.managers or 'Lead' in act.managers %}
+                                                <span class="manager-na">{{ act.managers }}</span>
+                                            {% else %}
+                                                <span class="manager-name">{{ act.managers }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center font-mono text-dark">
+                                            {{ act.active_employees }}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="text-dark fw-bold">{{ act.customer_count }}</span>
+                                            <span class="text-muted small ms-1">clients</span>
+                                        </td>
+                                        <td class="text-end pe-2">
+                                            <span class="territory-tag">{{ act.territory }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <div class="stats-card">
-        <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
-            <h5 class="fw-bold text-dark mb-0">
-                <i class="bi bi-globe-americas text-info me-2"></i>Office Activity Status
-            </h5>
-            <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3">Coverage Report</span>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-header-custom">
-                    <tr>
-                        <th class="ps-4">Office City</th>
-                        <th>Country</th>
-                        <th class="text-center">Total Customers</th>
-                        <th class="text-end pe-4">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stat in activity_stats %}
-                    <tr>
-                        <td class="ps-4 fw-bold text-dark">{{ stat.city }}</td>
-                        <td class="text-secondary">{{ stat.country }}</td>
-                        <td class="text-center text-success fw-bold fs-5">
-                            {{ stat.customer_count }}
-                        </td>
-                        <td class="text-end pe-4">
-                            {% if stat.customer_count == 0 %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 fw-bold border border-danger border-opacity-25" style="min-width: 90px;">
-                                    Inactive
-                                </span>
-                            {% else %}
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 fw-bold border border-success border-opacity-25" style="min-width: 90px;">
-                                    Active
-                                </span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const labels = [{% for item in order_stats %}"{{ item.city }}",{% endfor %}];
+        const data = [{% for item in order_stats %}{{ item.total_sales }},{% endfor %}];
+        
+        const colors = [
+            '#206bc4', '#4299e1', '#2fb344', '#f76707', 
+            '#ae3ec9', '#d6336c', '#f59f00', '#1f2937'
+        ];
+
+        const ctx = document.getElementById('salesPieChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'right', 
+                        labels: { 
+                            usePointStyle: true,
+                            boxWidth: 8, 
+                            padding: 15, 
+                            font: { size: 11, family: '-apple-system, sans-serif' },
+                            color: '#64748b'
+                        },
+                        onClick: null
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw;
+                                return ' $' + value.toLocaleString(undefined, {minimumFractionDigits: 2});
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
