@@ -36,6 +36,11 @@
     .status-On-Hold { border-left-color: #ffc107; }
     .status-In-Process { border-left-color: #0dcaf0; }
     .status-Resolved { border-left-color: #0d6efd; }
+
+    .filter-btn { background: transparent; border: 1px solid #ddd; border-radius: 8px; padding: 8px 15px; color: #555; transition: all 0.3s; }
+    .filter-btn:hover, .filter-btn[aria-expanded="true"] { background: #f8f9fa; color: #0d6efd; border-color: #0d6efd; }
+    .filter-dropdown { background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 20px; margin-top: 10px; }
+    .filter-section-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #888; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
 </style>
 
 <div class="container mt-4 mb-5">
@@ -76,23 +81,102 @@
     </div>
     {% endif %}
 
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">
+        <i class="bi bi-person-lines-fill me-2"></i>Orders for {{ customer.customerName }}
+    </h2>
+    
+    <button class="filter-btn d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false">
+    <img src="{{ url_for('static', filename='images/filter.png') }}" 
+         alt="Filter" 
+         style="width: 20px; height: 20px; margin-right: 8px;">Filter Orders
+    </button>
+</div>
 
-    <div class="dashboard-header d-flex justify-content-between align-items-center flex-wrap">
-        <div>
-            <h2 class="fw-bold mb-1">📦 Order History</h2>
-            <p class="mb-0 opacity-75">Manage orders for {{ customer.customerName }}</p>
-        </div>
+<div class="collapse mb-4" id="filterPanel">
+    <div class="filter-dropdown">
+        <form action="{{ url_for('employee_view_customer_orders', customer_num=customer_num) }}" method="GET">
+            
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="filter-section-title">By Category</div>
+                    <div style="max-height: 150px; overflow-y: auto;">
+                        {% for line in product_lines %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="category" 
+                                   value="{{ line.productLine }}" id="emp_cat_{{ loop.index }}"
+                                   {% if line.productLine in current_filters.categories %}checked{% endif %}>
+                            <label class="form-check-label small" for="emp_cat_{{ loop.index }}">
+                                {{ line.productLine }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
 
-        <form method="GET" action="{{ url_for('employee_view_customer_orders', customer_num=customer.customerNumber) }}" class="d-flex align-items-center mt-3 mt-md-0">
-            <label for="sort" class="me-2 fw-bold text-white small">Sort by:</label>
-            <select name="sort" id="sort" class="form-select form-select-sm border-0 shadow-none" 
-                    style="width: 150px; background-color: rgba(255,255,255,0.2); color: white; cursor: pointer;" 
-                    onchange="this.form.submit()">
-                <option value="newest" class="text-dark" {% if sort_option == 'newest' %}selected{% endif %}>📅 Newest First</option>
-                <option value="oldest" class="text-dark" {% if sort_option == 'oldest' %}selected{% endif %}>📅 Oldest First</option>
-            </select>
+                <div class="col-md-3">
+                    <div class="filter-section-title">By Price</div>
+                    {% set ranges = ['0-1000', '1000-10000', '10000-50000', '50000-100000', '100000+'] %}
+                    {% for rng in ranges %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="price" 
+                               value="{{ rng }}" id="emp_price_{{ loop.index }}"
+                               {% if rng in current_filters.price_ranges %}checked{% endif %}>
+                        <label class="form-check-label small" for="emp_price_{{ loop.index }}">
+                            $ {{ rng }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="col-md-3">
+                    <div class="filter-section-title">By Status</div>
+                    {% set statuses = ['In Process', 'Shipped', 'Cancelled', 'Resolved', 'Disputed', 'On Hold'] %}
+                    {% for stat in statuses %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="status" 
+                               value="{{ stat }}" id="emp_stat_{{ loop.index }}"
+                               {% if stat in current_filters.status %}checked{% endif %}>
+                        <label class="form-check-label small" for="emp_stat_{{ loop.index }}">
+                            {{ stat }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="col-md-3">
+                    <div class="filter-section-title">By Date</div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sort_date" 
+                               value="newest" id="emp_sort_new"
+                               {% if current_filters.sort_date == 'newest' %}checked{% endif %}>
+                        <label class="form-check-label small" for="emp_sort_new">
+                            Newest First <i class="bi bi-arrow-down"></i>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sort_date" 
+                               value="oldest" id="emp_sort_old"
+                               {% if current_filters.sort_date == 'oldest' %}checked{% endif %}>
+                        <label class="form-check-label small" for="emp_sort_old">
+                            Oldest First <i class="bi bi-arrow-up"></i>
+                        </label>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            Apply Filters
+                        </button>
+                        <a href="{{ url_for('employee_view_customer_orders', customer_num=customer_num) }}" 
+                           class="btn btn-link btn-sm w-100 text-muted mt-1" style="text-decoration: none;">
+                            Clear All
+                        </a>
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
+</div>
 
     {% if orders %}
     <div class="row g-4 mb-5">

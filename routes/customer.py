@@ -34,24 +34,30 @@ def init_customer_routes(app, database):
 
     @app.route("/customer/orders")
     def customer_orders():
-        """Shows the logged-in customer's order history."""
         if session.get("user_type") != "customer":
-            flash("You must be a customer to view this page.", "danger")
-            return redirect(url_for("index"))
+            return redirect(url_for("login"))
 
-        customerNumber = session.get("user_number")
-       
-        # take sort parameter (default is newest) 
-        sort_option = request.args.get('sort', 'newest') 
+        customer_number = session.get("user_number")
         
-        if not customerNumber:
-            flash("Error finding your profile. Please log in again.", "danger")
-            return redirect(url_for('login'))
-        
-        # send sort request to database
-        orders = db.get_customer_orders(customerNumber, sort_by=sort_option)
-        
-        return render_template("customer_orders.html", orders=orders, sort_option=sort_option)
+        filters = {
+            'status': request.args.getlist('status'),       
+            'categories': request.args.getlist('category'), 
+            'price_ranges': request.args.getlist('price'),  
+            'sort_date': request.args.get('sort_date', 'newest') 
+        }
+
+        # take filtered orders from DB
+        orders = db.get_filtered_orders(customer_number, filters)
+
+        # for filter options
+        product_lines = db.execute_query("SELECT productLine FROM productlines")
+
+        return render_template(
+            "customer_orders.html", 
+            orders=orders,
+            product_lines=product_lines,
+            current_filters=filters
+        )
     
     @app.route("/customer/signup", methods=["GET","POST"])
     def customer_signup():

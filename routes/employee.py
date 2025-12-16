@@ -133,34 +133,32 @@ def init_employee_routes(app, database):
 
     @app.route("/employee/customer_orders/<int:customer_num>")
     def employee_view_customer_orders(customer_num):
-        """View a customer's orders. Permissions vary by role."""
+
         if session.get("user_type") != "employee":
-            flash("You must be an employee to view this page.", "danger")
+            flash("Access denied.", "danger")
             return redirect(url_for("login"))
 
-        my_customers_data = db.get_assigned_customers(session.get("user_number"))
+        filters = {
+            'status': request.args.getlist('status'),
+            'categories': request.args.getlist('category'),
+            'price_ranges': request.args.getlist('price'),
+            'sort_date': request.args.get('sort_date', 'newest')
+        }
 
-        sort_option = request.args.get('sort', 'newest')
-        
-        details = db.get_customer_details(customer_num)
-        
-        orders = db.get_customer_orders(customer_num, sort_by=sort_option)
-        
-        balance = db.get_customer_balance(customer_num)
-        payments = db.get_customer_payments(customer_num)
+        orders = db.get_filtered_orders(customer_num, filters)
 
-        manager_number = session.get("user_number")
-        manager_details = db.get_employee_details(manager_number)
-        is_manager = "Manager" in manager_details['jobTitle'] or "President" in manager_details['jobTitle'] or "VP" in manager_details['jobTitle']
+        product_lines = db.execute_query("SELECT productLine FROM productlines")
+        
+        customer = db.get_customer_details(customer_num)
 
-        # Add sort parameter to HTML and render 
-        return render_template("employee_customer_orders.html",
-                               customer=details,
-                               orders=orders,
-                               balance=balance,
-                               payments=payments,
-                               sort_option=sort_option,
-                               is_manager=is_manager)
+        return render_template(
+            "employee_customer_orders.html", 
+            orders=orders,
+            product_lines=product_lines,
+            current_filters=filters,
+            customer=customer,   
+            customer_num=customer_num 
+        )
 
     @app.route("/create_report", methods=["POST"])
     def create_report():

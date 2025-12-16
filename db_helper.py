@@ -839,6 +839,72 @@ class DatabaseHandler:
         """
         return self.execute_query(query)
 
+    def get_filtered_orders(self, customer_number, filters):
+        """
+        Advanced Filtering with Dynamic SQL & Nested Queries.
+        Satisfies 'Nested Query' requirement for Price and Category filtering.
+        """
+    
+        query = "SELECT * FROM orders WHERE customerNumber = %s"
+        params = [customer_number]
+
+        # status filter
+        if filters.get('status'):
+            placeholders = ', '.join(['%s'] * len(filters['status']))
+            query += f" AND status IN ({placeholders})"
+            params.extend(filters['status'])
+
+        # category filter
+        if filters.get('categories'):
+            cat_placeholders = ', '.join(['%s'] * len(filters['categories']))
+            query += f"""
+                AND orderNumber IN (
+                    SELECT orderNumber 
+                    FROM orderdetails 
+                    WHERE productCode IN (
+                        SELECT productCode 
+                        FROM products 
+                        WHERE productLine IN ({cat_placeholders})
+                    )
+                )
+            """
+            params.extend(filters['categories'])
+
+        # price range filter
+        if filters.get('price_ranges'):
+            price_conditions = []
+            
+            for rng in filters['price_ranges']:
+                if rng == '0-1000':
+                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 0 AND 1000")
+                elif rng == '1000-10000':
+                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 1000 AND 10000")
+                elif rng == '10000-50000':
+                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 10000 AND 50000")
+                elif rng == '50000-100000':
+                    price_conditions.append("SUM(quantityOrdered * priceEach) BETWEEN 50000 AND 100000")
+                elif rng == '100000+':
+                    price_conditions.append("SUM(quantityOrdered * priceEach) > 100000")
+            
+            if price_conditions:
+                or_clause = " OR ".join(price_conditions)
+                query += f"""
+                    AND orderNumber IN (
+                        SELECT orderNumber 
+                        FROM orderdetails 
+                        GROUP BY orderNumber 
+                        HAVING {or_clause}
+                    )
+                """
+        # sort by date
+        sort_order = filters.get('sort_date', 'newest')
+        if sort_order == 'oldest':
+            query += " ORDER BY orderDate ASC, orderNumber ASC"
+        else:
+            query += " ORDER BY orderDate DESC, orderNumber DESC"
+
+        return self.execute_query(query, tuple(params))
+
     def close(self):
         """Closes the cursor and database connection."""
         self.cursor.close()
