@@ -2,6 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, session, r
 from werkzeug.security import generate_password_hash
 import string
 import random
+import math
 
 db = None
 
@@ -147,6 +148,21 @@ def init_employee_routes(app, database):
 
         orders = db.get_filtered_orders(customer_num, filters)
 
+        page = request.args.get('page', 1, type=int)
+        per_page = 7
+
+        total_orders = len(orders)
+        total_pages = math.ceil(total_orders / per_page)
+
+        start = (page - 1) * per_page
+        end = start + per_page
+        orders = orders[start:end]
+
+        clean_args = request.args.copy()
+
+        if 'page' in clean_args:
+            clean_args.pop('page')
+
         product_lines = db.execute_query("SELECT productLine FROM productlines")
         
         customer = db.get_customer_details(customer_num)
@@ -157,7 +173,11 @@ def init_employee_routes(app, database):
             product_lines=product_lines,
             current_filters=filters,
             customer=customer,   
-            customer_num=customer_num 
+            customer_num=customer_num,
+            page=page,
+            total_pages=total_pages,
+            total_orders=total_orders,
+            clean_args=clean_args
         )
 
     @app.route("/create_report", methods=["POST"])

@@ -268,6 +268,43 @@
         </div>
     </div>
     {% endif %}
-
 </div>
+
+{% if total_pages > 1 %}
+<nav aria-label="Order navigation" class="mt-5">
+    <ul class="pagination justify-content-center">
+        
+        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link border-0 shadow-sm rounded-circle mx-1" 
+               href="{{ url_for(request.endpoint, page=page-1, **clean_args) }}" 
+               aria-label="Previous" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+
+        {% for p in range(1, total_pages + 1) %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link border-0 shadow-sm rounded-circle mx-1" 
+               href="{{ url_for(request.endpoint, page=p, **clean_args) }}"
+               style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+               {{ p }}
+            </a>
+        </li>
+        {% endfor %}
+
+        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link border-0 shadow-sm rounded-circle mx-1" 
+               href="{{ url_for(request.endpoint, page=page+1, **clean_args) }}" 
+               aria-label="Next" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+    
+    <div class="text-center text-muted small mt-2">
+        Showing page {{ page }} of {{ total_pages }} (Total {{ total_orders }} orders)
+    </div>
+</nav>
+{% endif %}
+
 {% endblock %}
