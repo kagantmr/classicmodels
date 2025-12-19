@@ -333,6 +333,8 @@ def init_employee_routes(app, database):
             flash("Managers only.", "danger")
             return redirect(url_for("employee_dashboard"))
 
+        offices = db.get_all_offices()
+
         # --- Pagination ---
         analytics_page = request.args.get("analytics_page", 1, type=int)
         sales_office_page = request.args.get("sales_office_page", 1, type=int)
@@ -340,10 +342,19 @@ def init_employee_routes(app, database):
         offset = (analytics_page - 1) * limit
         sales_office_offset = (sales_office_page - 1) * limit
 
+        sales_office_search = request.args.get("sales_office_search", "").strip()
+        sales_office_filter = request.args.get("sales_office_filter", "")
+
         try:
             analytics_matrix = db.get_employee_performance_matrix(limit=limit, offset=offset)
             unproductive_employees = db.get_unproductive_employees()
             full_sales_vs_office = db.get_sales_rep_vs_office_average()
+            # Filter by office
+            if sales_office_filter:
+                full_sales_vs_office = [row for row in full_sales_vs_office if row['office_city'] == sales_office_filter]
+            # Filter by search
+            if sales_office_search:
+                full_sales_vs_office = [row for row in full_sales_vs_office if sales_office_search.lower() in row['office_city'].lower() or sales_office_search.lower() in row['sales_rep'].lower()]
             # Slice for pagination
             sales_vs_office = full_sales_vs_office[sales_office_offset:sales_office_offset+limit]
         except Exception as e:
@@ -364,5 +375,8 @@ def init_employee_routes(app, database):
             analytics_page=analytics_page,
             sales_office_page=sales_office_page,
             search_query=search_query,
-            sort_order=sort_order
+            sort_order=sort_order,
+            sales_office_search=sales_office_search,
+            sales_office_filter=sales_office_filter,
+            offices=offices
         )
