@@ -974,3 +974,50 @@ class DatabaseHandler:
         """Closes the cursor and database connection."""
         self.cursor.close()
         self.db.close()
+
+    def get_sales_rep_vs_office_average(self):
+        """
+        Analytical Report:
+        Compares each Sales Rep's total revenue against the average revenue
+        of all Sales Reps within the same office.
+        """
+
+        query = """
+            SELECT
+                o.city AS office_city,
+                e.employeeNumber,
+                CONCAT(e.firstName, ' ', e.lastName) AS sales_rep,
+                COALESCE(SUM(od.quantityOrdered * od.priceEach), 0) AS rep_revenue,
+
+                (
+                    SELECT AVG(rep_total)
+                    FROM (
+                        SELECT
+                            COALESCE(SUM(od2.quantityOrdered * od2.priceEach), 0) AS rep_total
+                        FROM employees e2
+                        LEFT JOIN customers c2 
+                            ON e2.employeeNumber = c2.salesRepEmployeeNumber
+                        LEFT JOIN orders o2 
+                            ON c2.customerNumber = o2.customerNumber
+                        LEFT JOIN orderdetails od2 
+                            ON o2.orderNumber = od2.orderNumber
+                        WHERE e2.officeCode = e.officeCode
+                        GROUP BY e2.employeeNumber
+                    ) office_rep_totals
+                ) AS office_avg_revenue
+
+            FROM offices o
+            JOIN employees e 
+                ON o.officeCode = e.officeCode
+            LEFT JOIN customers c 
+                ON e.employeeNumber = c.salesRepEmployeeNumber
+            LEFT JOIN orders ord 
+                ON c.customerNumber = ord.customerNumber
+            LEFT JOIN orderdetails od 
+                ON ord.orderNumber = od.orderNumber
+
+            GROUP BY o.city, e.employeeNumber, sales_rep
+            ORDER BY office_city, rep_revenue DESC;
+        """
+
+        return self.execute_query(query)

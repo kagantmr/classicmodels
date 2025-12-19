@@ -61,6 +61,7 @@ def init_employee_routes(app, database):
         subordinates = []
         analytics_matrix = []
         unproductive_employees = []
+        sales_vs_office = []
 
         # Analytics Pagination
         analytics_page = request.args.get("analytics_page", 1, type=int)
@@ -73,6 +74,7 @@ def init_employee_routes(app, database):
                 # New Analytics Features with Pagination
                 analytics_matrix = db.get_employee_performance_matrix(limit=limit, offset=offset)
                 unproductive_employees = db.get_unproductive_employees()
+                sales_vs_office = db.get_sales_rep_vs_office_average()
             except Exception as e:
                 print(f"Analytics Error: {e}")
 
@@ -85,6 +87,7 @@ def init_employee_routes(app, database):
                                subordinates=subordinates,
                                analytics_matrix=analytics_matrix,
                                unproductive_employees=unproductive_employees,
+                               sales_vs_office=sales_vs_office,
                                analytics_page=analytics_page,
                                is_sales_rep=is_sales_rep,
                                is_manager=is_manager,
@@ -170,13 +173,17 @@ def init_employee_routes(app, database):
         clean_args = request.args.to_dict(flat=False)
         clean_args.pop('page', None)
 
+        # Fetch customer payments
+        payments = db.get_customer_payments(customer_num)
+
         return render_template(
-            "employee_customer_orders.html", 
+            "employee_customer_orders.html",
+            customer=customer,
+            customer_num=customer_num,
             orders=orders,
+            payments=payments,
             product_lines=product_lines,
             current_filters=filters,
-            customer=customer,   
-            customer_num=customer_num,
             page=page,
             total_pages=total_pages,
             total_orders=total_orders,
@@ -244,7 +251,7 @@ def init_employee_routes(app, database):
                                activity_stats=activity_stats,
                                grand_total_sales=grand_total_sales)
 
-    @app.route("/payment/edit/<int:customer_number>/<string:check_number>", methods=["GET", "POST"])
+    @app.route("/payments/<int:customer_number>/<string:check_number>/edit", methods=["GET", "POST"])
     def edit_payment(customer_number, check_number):
         if session.get("user_type") != "employee":
             flash("Unauthorized access.", "danger")
@@ -268,7 +275,7 @@ def init_employee_routes(app, database):
 
         return render_template("edit_payment.html", payment=payment)
 
-    @app.route("/payment/delete/<int:customer_number>/<string:check_number>", methods=["POST"])
+    @app.route("/payments/<int:customer_number>/<string:check_number>/delete", methods=["POST"])
     def delete_payment_route(customer_number, check_number):
         if session.get("user_type") != "employee":
             flash("Unauthorized access.", "danger")
@@ -308,3 +315,54 @@ def init_employee_routes(app, database):
                                search_line=line_param, 
                                offices=offices_list,
                                product_lines=lines_list)
+
+
+    @app.route("/manager/analytics")
+    def manager_analytics():
+        if session.get("user_type") != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("index"))
+
+        employee_number = session.get("user_number")
+        employee_details = db.get_employee_details(employee_number)
+
+        is_manager = ("Manager" in employee_details['jobTitle']
+                    or "President" in employee_details['jobTitle']
+                    or "VP" in employee_details['jobTitle'])
+        if not is_manager:
+            flash("Managers only.", "danger")
+            return redirect(url_for("employee_dashboard"))
+
+        # --- Pagination ---
+        analytics_page = request.args.get("analytics_page", 1, type=int)
+        sales_office_page = request.args.get("sales_office_page", 1, type=int)
+        limit = 10
+        offset = (analytics_page - 1) * limit
+        sales_office_offset = (sales_office_page - 1) * limit
+
+        try:
+            analytics_matrix = db.get_employee_performance_matrix(limit=limit, offset=offset)
+            unproductive_employees = db.get_unproductive_employees()
+            full_sales_vs_office = db.get_sales_rep_vs_office_average()
+            # Slice for pagination
+            sales_vs_office = full_sales_vs_office[sales_office_offset:sales_office_offset+limit]
+        except Exception as e:
+            print(f"Manager Analytics Error: {e}")
+            analytics_matrix = []
+            unproductive_employees = []
+            sales_vs_office = []
+
+        search_query = request.args.get("search", "")
+        sort_order = request.args.get("sort", "")
+
+        return render_template(
+            "manager_analytics.html",
+            analytics_matrix=analytics_matrix,
+            unproductive_employees=unproductive_employees,
+            sales_vs_office=sales_vs_office,
+            is_manager=True,
+            analytics_page=analytics_page,
+            sales_office_page=sales_office_page,
+            search_query=search_query,
+            sort_order=sort_order
+        )

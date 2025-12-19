@@ -5,8 +5,8 @@
     <div class="col-md-6">
       <!-- Placeholder image, you can later store image URLs in DB -->
       <div class="border rounded p-3 text-center">
-        <img src="https://via.placeholder.com/400x300?text={{ product.productName | urlencode }}" 
-             alt="{{ product.productName }}" class="img-fluid">
+        <img src="https://via.placeholder.com/400x300?text={{ product.productName | urlencode }}"
+          alt="{{ product.productName }}" class="img-fluid">
       </div>
     </div>
 
@@ -28,46 +28,48 @@
       <p class="mb-3">{{ product.productDescription }}</p>
 
       <p class="h4 mb-2">
-        Price: 
+        Price:
         {% if product.MSRP %}
-          ${{ "%.2f"|format(product.MSRP) }}
+        ${{ "%.2f"|format(product.MSRP) }}
         {% elif product.buyPrice %}
-          ${{ "%.2f"|format(product.buyPrice) }}
+        ${{ "%.2f"|format(product.buyPrice) }}
         {% else %}
-          Not available
+        Not available
         {% endif %}
       </p>
 
       <p class="mb-3">
-        In stock: 
+        In stock:
         <span class="{% if product.quantityInStock > 0 %}text-success{% else %}text-danger{% endif %}">
           {{ product.quantityInStock }}
         </span>
       </p>
 
       {% if session.get("user_type") == "customer" %}
-        <form action="{{ url_for('add_to_cart', product_code=product.productCode) }}" method="POST" class="mt-3">
-          <div class="row g-2 align-items-center">
-            <div class="col-auto">
-              <label for="quantity" class="col-form-label">Quantity</label>
-            </div>
-            <div class="col-auto">
-              <input type="number" id="quantity" name="quantity" class="form-control" min="1" value="1">
-            </div>
+      <form action="{{ url_for('add_to_cart', product_code=product.productCode) }}" method="POST" class="mt-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-auto">
+            <label for="quantity" class="col-form-label">Quantity</label>
           </div>
-          {% if in_cart_qty and in_cart_qty > 0 %}
-            <p class="mt-2 text-muted">
-              Currently in cart: <strong>{{ in_cart_qty }}</strong>
-            </p>
-          {% endif %}
-          <button type="submit" class="btn btn-primary mt-3">
-            🛒 Add to Cart
-          </button>
-        </form>
-      {% else %}
-        <div class="alert alert-info mt-3">
-          Log in as a customer to place an order.
+          <div class="col-auto">
+            <input type="number" id="quantity" name="quantity" class="form-control" min="1" value="1">
+          </div>
         </div>
+        {% if in_cart_qty and in_cart_qty > 0 %}
+        <p class="mt-2 text-muted">
+          Currently in cart: <strong>{{ in_cart_qty }}</strong>
+        </p>
+        {% endif %}
+        <button type="submit" class="btn btn-primary mt-3">
+          🛒 Add to Cart
+        </button>
+      </form>
+      {% else %}
+      {% if session.get("user_type") != "employee" %}
+      <div class="alert alert-info mt-3">
+        Log in as a customer to place an order.
+      </div>
+      {% endif %}
       {% endif %}
     </div>
   </div>

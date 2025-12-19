@@ -1,0 +1,181 @@
+{% extends "layout.html" %}
+
+{% block body_class %}dark-mode{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+
+    <div class="page-header mb-5">
+        <h2 class="dashboard-title mb-0">Manager Analytics</h2>
+        <div class="text-white-50 small mt-1">
+            Performance insights across offices and sales representatives
+        </div>
+    </div>
+
+    {% if is_manager %}
+    <!-- NEW: Analytics Section -->
+    <h3 class="mb-4" id="sales-analytics">📊 Sales Analytics (Manager View)</h3>
+
+    <!-- 1. Unproductive Employees Alert -->
+    {% if unproductive_employees %}
+    <div class="alert alert-danger shadow-sm">
+        <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> At Risk Employees (No Sales/Activity)
+        </h5>
+        <p>The following Sales Reps have <strong>zero orders</strong>.</p>
+        <ul class="mb-0">
+            {% for bad_emp in unproductive_employees %}
+            <li>
+                <strong>{{ bad_emp.firstName }} {{ bad_emp.lastName }}</strong> (ID: {{ bad_emp.employeeNumber }}) -
+                <a href="mailto:{{ bad_emp.email }}">{{ bad_emp.email }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- 2. Performance Matrix -->
+    {% if analytics_matrix %}
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">🏆 Employee Performance (Revenue by Product Line)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sales Rep</th>
+                            <th>Product Line</th>
+                            <th class="text-end">Total Revenue Generated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in analytics_matrix %}
+                        <tr>
+                            <td>{{ row.firstName }} {{ row.lastName }}</td>
+                            <td><span class="badge bg-secondary">{{ row.productLine }}</span></td>
+                            <td class="text-end fw-bold text-success">${{ "%.2f"|format(row.revenue) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-center align-items-center mt-3 gap-3 mb-3">
+                {% if analytics_page > 1 %}
+                <a href="{{ url_for('manager_analytics', analytics_page=analytics_page-1, search=search_query, sort=sort_order) }}#sales-analytics"
+                    class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Previous
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-arrow-left"></i>
+                    Previous</button>
+                {% endif %}
+
+                <span class="text-muted small">Page {{ analytics_page }}</span>
+
+                <!-- Next Logic -->
+                {% if analytics_matrix|length == 10 %}
+                <a href="{{ url_for('manager_analytics', analytics_page=analytics_page+1, search=search_query, sort=sort_order) }}#sales-analytics"
+                    class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-arrow-right"></i>
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled>Next <i
+                        class="bi bi-arrow-right"></i></button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if sales_vs_office %}
+    <div class="card card-dark card-static mb-5">
+        <h3 id="sales-vs-office" class="card-header-dark">
+            Sales Rep Performance vs Office Average
+        </h3>
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Office</th>
+                        <th>Sales Rep</th>
+                        <th class="text-end">Rep Revenue</th>
+                        <th class="text-end">Office Avg</th>
+                        <th class="text-end">Δ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sales_vs_office %}
+                    <tr>
+                        <td>{{ row['office_city'] }}</td>
+                        <td>{{ row['sales_rep'] }}</td>
+                        <td class="text-end fw-bold text-success">
+                            ${{ "%.2f"|format(row.get('rep_revenue', 0)) }}
+                        </td>
+                        <td class="text-end">
+                            ${{ "%.2f"|format(row.get('office_avg_revenue', 0)) }}
+                        </td>
+                        <td class="text-end">
+                            {% set delta = row.get('rep_revenue', 0) - row.get('office_avg_revenue', 0) %}
+                            {% if delta >= 0 %}
+                            <span class="text-success fw-bold">
+                                +${{ "%.2f"|format(delta) }}
+                            </span>
+                            {% else %}
+                            <span class="text-danger fw-bold">
+                                ${{ "%.2f"|format(delta) }}
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <!-- Pagination for Sales vs Office -->
+            <div class="d-flex justify-content-center align-items-center mt-3 gap-3 mb-3">
+                {% if sales_office_page > 1 %}
+                <a href="{{ url_for('manager_analytics', sales_office_page=sales_office_page-1, analytics_page=analytics_page, search=search_query, sort=sort_order) }}#sales-vs-office"
+                    class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Previous
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-arrow-left"></i>
+                    Previous</button>
+                {% endif %}
+
+                <span class="text-white fw-bold small">Page {{ sales_office_page }}</span>
+
+                {% if sales_vs_office|length == 10 %}
+                <a href="{{ url_for('manager_analytics', sales_office_page=sales_office_page+1, analytics_page=analytics_page, search=search_query, sort=sort_order) }}#sales-vs-office"
+                    class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-arrow-right"></i>
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled>Next <i
+                        class="bi bi-arrow-right"></i></button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash && window.location.hash.indexOf('sales-analytics') !== -1) {
+            const el = document.getElementById('sales-analytics');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        if (window.location.hash && window.location.hash.indexOf('sales-vs-office') !== -1) {
+            const el = document.getElementById('sales-vs-office');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+</script>
+{% endblock %}
