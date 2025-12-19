@@ -874,11 +874,8 @@ class DatabaseHandler:
         """
         return self.execute_query(query)
 
-    def get_filtered_orders(self, customer_number, filters):
-        """
-        Retrieves orders for a customer based on multiple filters and sorting options.
-        Includes total amount and item summary for each order.
-        """
+    def get_filtered_orders(self, customer_number, filters, search_query=None):
+        #main query
         query = """
             SELECT 
                 o.orderNumber,
@@ -924,18 +921,43 @@ class DatabaseHandler:
             """
             params.extend(filters['categories'])
 
-        if filters.get('price_ranges'):
-            price_conditions = []
-            for rng in filters['price_ranges']:
-                if rng == '0-1000': price_conditions.append("totalAmount BETWEEN 0 AND 1000")
-                elif rng == '1000-10000': price_conditions.append("totalAmount BETWEEN 1000 AND 10000")
-                elif rng == '10000-50000': price_conditions.append("totalAmount BETWEEN 10000 AND 50000")
-                elif rng == '50000-100000': price_conditions.append("totalAmount BETWEEN 50000 AND 100000")
-                elif rng == '100000+': price_conditions.append("totalAmount > 100000")
-            
-            if price_conditions:
-                query += " HAVING (" + " OR ".join(price_conditions) + ")"
+        # HAVING SECTION (Price Filter AND Search Bar Combine Here)
+        # HAVING options because items_summary and totalAmount are calculated values.
+        having_conditions = []
 
+        if filters.get('price_ranges'):
+            price_sub_conditions = []
+            for rng in filters['price_ranges']:
+                if rng == '0-1000': price_sub_conditions.append("totalAmount BETWEEN 0 AND 1000")
+                elif rng == '1000-10000': price_sub_conditions.append("totalAmount BETWEEN 1000 AND 10000")
+                elif rng == '10000-50000': price_sub_conditions.append("totalAmount BETWEEN 10000 AND 50000")
+                elif rng == '50000-100000': price_sub_conditions.append("totalAmount BETWEEN 50000 AND 100000")
+                elif rng == '100000+': price_sub_conditions.append("totalAmount > 100000")
+            
+            if price_sub_conditions:
+                having_conditions.append("(" + " OR ".join(price_sub_conditions) + ")")
+
+        # SEARCH
+        if search_query:
+            # CONCAT_WS combines multiple fields into one string for searching
+            # items_summary (ürün isimleri), orderNumber, status, totalAmount, orderDate... all's included
+            search_sql = """
+                CONCAT_WS(' ', 
+                    o.orderNumber, 
+                    o.status, 
+                    DATE_FORMAT(o.orderDate, '%Y-%m-%d %b %M %W'),
+                    items_summary, 
+                    totalAmount
+                ) REGEXP %s
+            """
+            having_conditions.append(search_sql)
+            params.append(search_query)
+
+        # comine having conditions and add to query
+        if having_conditions:
+            query += " HAVING " + " AND ".join(having_conditions)
+
+        # sorting
         sort_option = filters.get('sort_option', 'date_desc')
         if sort_option == 'date_asc':
             query += " ORDER BY o.orderDate ASC"

@@ -41,6 +41,8 @@ def init_customer_routes(app, database):
 
         customer_number = session.get("user_number")
 
+        search_query = request.args.get('q', '').strip()
+
         filters = {
             'status': request.args.getlist('status'),
             'categories': request.args.getlist('category'),
@@ -51,7 +53,7 @@ def init_customer_routes(app, database):
 
         customer = db.get_customer_details(customer_number)
 
-        orders = db.get_filtered_orders(customer_number, filters)
+        orders = db.get_filtered_orders(customer_number, filters , search_query=search_query)
 
         #Pagination
         page = request.args.get('page', 1, type=int)
@@ -80,7 +82,8 @@ def init_customer_routes(app, database):
             page=page,
             total_pages=total_pages,
             total_orders=total_orders,
-            clean_args=clean_args
+            clean_args=clean_args,
+            search_query=search_query
     )
 
     

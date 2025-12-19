@@ -147,10 +147,15 @@ def init_employee_routes(app, database):
             'sort_option': request.args.get('sort_option', 'date_desc')
         }
 
-        orders = db.get_filtered_orders(customer_num, filters)
         customer = db.get_customer_details(customer_num)
+
         product_lines = db.execute_query("SELECT productLine FROM productlines")
 
+        search_query = request.args.get('q', '').strip()
+
+        orders = db.get_filtered_orders(customer_num, filters, search_query=search_query)
+        
+        # Pagination
         page = request.args.get('page', 1, type=int)
         per_page = 7
 
@@ -161,6 +166,7 @@ def init_employee_routes(app, database):
         end = start + per_page
         orders = orders[start:end]
 
+        # Clean args for pagination links
         clean_args = request.args.to_dict(flat=False)
         clean_args.pop('page', None)
 
@@ -174,7 +180,8 @@ def init_employee_routes(app, database):
             page=page,
             total_pages=total_pages,
             total_orders=total_orders,
-            clean_args=clean_args
+            clean_args=clean_args,
+            search_query=search_query
         )
 
     @app.route("/create_report", methods=["POST"])

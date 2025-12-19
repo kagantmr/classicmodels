@@ -158,6 +158,36 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <div class="col-12">
+            <form action="{{ url_for('employee_view_customer_orders', customer_num=customer_num) }}" method="GET" class="position-relative">
+                
+                {% for key, val_list in clean_args.items() %}
+                    {% if key != 'q' %}
+                        {% for val in val_list %}
+                            <input type="hidden" name="{{ key }}" value="{{ val }}">
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+
+                <input type="text" name="q" 
+                       class="form-control form-control-lg border-0 shadow-sm ps-5 text-white" 
+                       placeholder="Search orders (ID, Product, Status)..." 
+                       value="{{ search_query }}" 
+                       style="background-color: #252a37; border-radius: 12px; height: 55px; font-size: 1rem;">
+                
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="font-size: 1.2rem;"></i>
+                
+                {% if search_query %}
+                <a href="{{ url_for('employee_view_customer_orders', customer_num=customer_num) }}" class="position-absolute top-50 end-0 translate-middle-y me-3 text-muted text-decoration-none">
+                    <i class="bi bi-x-circle-fill" style="font-size: 1.2rem;"></i>
+                </a>
+                {% endif %}
+                
+            </form>
+        </div>
+    </div>
+
     <div class="collapse mb-5" id="filterPanel">
         <div class="filter-dropdown-dark">
             <form action="{{ url_for('employee_view_customer_orders', customer_num=customer_num) }}" method="GET">
@@ -251,7 +281,7 @@
     <div class="row">
         {% for order in orders %}
         <div class="col-12">
-            <div class="card order-card-dark">
+            <a href="{{ url_for('order_detail', order_number=order.orderNumber) }}" class="card order-card-dark text-decoration-none d-block">
                 
                 <div class="card-header-dark">
                     <div class="d-flex align-items-center">
@@ -291,22 +321,18 @@
                         </p>
                     </div>
 
-                    <div class="text-end" style="min-width: 150px;">
-                        <div class="mb-2">
-                            <span class="small text-uppercase" style="color: #ced4da; font-weight: 600; letter-spacing: 0.5px;">Status:</span>
-                            {% if order.status == 'Shipped' %}<span class="badge badge-shipped ms-1">Shipped</span>
-                            {% elif order.status == 'Cancelled' %}<span class="badge badge-cancelled ms-1">Cancelled</span>
-                            {% elif order.status == 'In Process' %}<span class="badge badge-process ms-1">In Process</span>
-                            {% elif order.status == 'On Hold' %}<span class="badge badge-hold ms-1">On Hold</span>
-                            {% else %}<span class="badge badge-default ms-1">{{ order.status }}</span>{% endif %}
-                        </div>
-                        <a href="{{ url_for('order_detail', order_number=order.orderNumber) }}" class="btn btn-details">
-                            View Details <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                    <div class="text-end" style="min-width: 120px;">
+                        <span class="small text-uppercase d-block mb-1" style="color: #ced4da; font-weight: 600; letter-spacing: 0.5px;">Status:</span>
+                        
+                        {% if order.status == 'Shipped' %}<span class="badge badge-shipped fs-6">Shipped</span>
+                        {% elif order.status == 'Cancelled' %}<span class="badge badge-cancelled fs-6">Cancelled</span>
+                        {% elif order.status == 'In Process' %}<span class="badge badge-process fs-6">In Process</span>
+                        {% elif order.status == 'On Hold' %}<span class="badge badge-hold fs-6">On Hold</span>
+                        {% else %}<span class="badge badge-default fs-6">{{ order.status }}</span>{% endif %}
                     </div>
                 </div>
 
-            </div>
+            </a>
         </div>
         {% endfor %}
     </div>
