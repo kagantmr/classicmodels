@@ -141,7 +141,9 @@ def init_order_routes(app, database):
 
     @app.route("/order/item/<int:detail_id>/delete", methods=["POST"])
     def delete_order_item(detail_id):
-        if not session.get("user_number"):
+        user_number = session.get("user_number")
+        user_type = session.get("user_type")
+        if not user_number:
             flash("Please log in.", "danger")
             return redirect(url_for("login"))
 
@@ -152,7 +154,11 @@ def init_order_routes(app, database):
 
         order_number = item['orderNumber']
         order = db.get_order(order_number)
-        
+
+        if user_type == "customer" and order['customerNumber'] != user_number:
+            flash("Access denied. You cannot modify another customer's order.", "danger")
+            return redirect(url_for("index"))
+            
         if order['status'] != 'In Process':
             flash("Cannot remove items from a processed order.", "danger")
             return redirect(url_for("order_detail", order_number=order_number))
