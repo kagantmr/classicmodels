@@ -1,16 +1,105 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="container mt-5" style="max-width: 600px;">
-    <div class="card shadow-sm">
-        <div class="card-body">
+<style>
+    .signup-container {
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+        max-width: 650px;
+        margin: 0 auto;
+    }
 
-            <h3 class="text-center mb-4">Customer Sign Up</h3>
+    .card-dark {
+        background-color: #252a37;
+        border: 1px solid #34495e;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
 
-            <!-- ERROR MESSAGES -->
+    .card-header-primary {
+        background: linear-gradient(135deg, #0e3a6d, #0e3a6d);
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid #34495e;
+    }
+
+    .form-label-dark {
+        color: #e0e0e0;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control-dark {
+        background-color: #1a1e2b;
+        border: 1px solid #34495e;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .form-control-dark:focus {
+        background-color: #1a1e2b;
+        border-color: #0e3a6d;
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(14, 58, 109, 0.25);
+    }
+
+    .form-control-dark::placeholder {
+        color: #6c757d;
+    }
+
+    .btn-success-dark {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        border: none;
+        padding: 0.8rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
+    }
+
+    .btn-success-dark:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(46, 204, 113, 0.3);
+        background: linear-gradient(135deg, #27ae60, #219150);
+    }
+
+    .text-readable-secondary {
+        color: #adb5bd !important;
+    }
+
+    .text-link {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+    .text-link:hover {
+        color: #5dade2;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="container signup-container">
+    <div class="card card-dark">
+        
+        <div class="card-header-primary">
+            <h3 class="text-white fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Join ClassicModels</h3>
+            <p class="text-white-50 mb-0">Create your account to start collecting</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+
             {% if errors %}
-            <div class="alert alert-danger">
-                <ul class="mb-0">
+            <div class="alert alert-danger border-danger bg-transparent text-danger mb-4">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <strong>Please check the following:</strong>
+                </div>
+                <ul class="mb-0 ps-3">
                     {% for err in errors %}
                         <li>{{ err }}</li>
                     {% endfor %}
@@ -20,66 +109,76 @@
 
             <form method="POST">
 
-                <!-- First name & last name -->
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">First Name</label>
-                        <input type="text" name="contactFirstName" class="form-control"
-                               value="{{ form.contactFirstName if form else '' }}" required>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label-dark">First Name</label>
+                        <input type="text" name="contactFirstName" class="form-control form-control-dark"
+                               value="{{ form.contactFirstName if form else '' }}" required placeholder="John">
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Last Name</label>
-                        <input type="text" name="contactLastName" class="form-control"
-                               value="{{ form.contactLastName if form else '' }}" required>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label-dark">Last Name</label>
+                        <input type="text" name="contactLastName" class="form-control form-control-dark"
+                               value="{{ form.contactLastName if form else '' }}" required placeholder="Doe">
                     </div>
                 </div>
 
-                <!-- Customer name -->
-                <div class="mb-3">
-                    <label class="form-label">Customer Name</label>
-                    <input type="text" name="customerName" class="form-control"
-                           value="{{ form.customerName if form else '' }}" required>
+                <div class="mb-4">
+                    <label class="form-label-dark">Company / Customer Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-building"></i></span>
+                        <input type="text" name="customerName" class="form-control form-control-dark"
+                               value="{{ form.customerName if form else '' }}" required placeholder="e.g. Acme Corp.">
+                    </div>
                 </div>
 
-                <!-- Phone -->
-                <div class="mb-3">
-                    <label class="form-label">Phone</label>
-                    <input type="text" name="phone" class="form-control"
-                           value="{{ form.phone if form else '' }}" required>
+                <div class="mb-4">
+                    <label class="form-label-dark">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-telephone"></i></span>
+                        <input type="text" name="phone" class="form-control form-control-dark"
+                               value="{{ form.phone if form else '' }}" required placeholder="+1 555 123 4567">
+                    </div>
                 </div>
 
-                <!-- Address -->
-                <div class="mb-3">
-                    <label class="form-label">Address Line 1</label>
-                    <input type="text" name="addressLine1" class="form-control"
-                           value="{{ form.addressLine1 if form else '' }}" required>
+                <div class="mb-4">
+                    <label class="form-label-dark">Address Line 1</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-geo-alt"></i></span>
+                        <input type="text" name="addressLine1" class="form-control form-control-dark"
+                               value="{{ form.addressLine1 if form else '' }}" required placeholder="Street address, P.O. box">
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">City</label>
-                    <input type="text" name="city" class="form-control"
-                           value="{{ form.city if form else '' }}" required>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label-dark">City</label>
+                        <input type="text" name="city" class="form-control form-control-dark"
+                               value="{{ form.city if form else '' }}" required>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label-dark">Country</label>
+                        <input type="text" name="country" class="form-control form-control-dark"
+                               value="{{ form.country if form else '' }}" required>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Country</label>
-                    <input type="text" name="country" class="form-control"
-                           value="{{ form.country if form else '' }}" required>
+                <div class="mb-5">
+                    <label class="form-label-dark">Create Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-lock"></i></span>
+                        <input type="password" name="password" class="form-control form-control-dark" required placeholder="Min 8 characters">
+                    </div>
                 </div>
 
-                <!-- Password -->
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
-                </div>
-
-                <button type="submit" class="btn btn-success w-100">
+                <button type="submit" class="btn btn-success-dark w-100 text-white mb-4">
                     Create Account
                 </button>
 
-                <div class="text-center mt-3">
-                    <a href="{{ url_for('login') }}">Already have an account? Login</a>
+                <div class="text-center pt-3 border-top border-secondary">
+                    <span class="text-readable-secondary">Already have an account?</span>
+                    <a href="{{ url_for('login') }}" class="text-link ms-1">Login here</a>
                 </div>
 
             </form>

@@ -1,60 +1,182 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="card shadow-lg border-0" style="max-width: 450px; width: 100%;">
-        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-            <h3 class="text-center">Welcome Back</h3>
-            <p class="text-center text-muted small">Please sign in to continue</p>
+<style>
+    .login-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-login {
+        background-color: #252a37; 
+        border: 1px solid #34495e;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+    }
+
+    .card-header-login {
+        background-color: #2c3140; 
+        border-bottom: 1px solid #34495e;
+        padding: 2rem 1.5rem 1rem;
+    }
+
+    .text-readable-secondary {
+        color: #adb5bd !important; 
+        font-size: 0.9rem;
+    }
+
+    .nav-pills .nav-link {
+        color: #adb5bd; 
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-pills .nav-link:hover {
+        color: #fff;
+        background-color: rgba(255,255,255,0.05);
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: #3498db;
+        color: white;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    }
+
+    .form-control-dark-login {
+        background-color: #1a1e2b;
+        border: 1px solid #34495e;
+        color: #e0e0e0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+    }
+
+    .form-control-dark-login:focus {
+        background-color: #1a1e2b;
+        border-color: #3498db;
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+    }
+    
+    .form-control-dark-login::placeholder {
+        color: #6c757d; 
+    }
+
+
+    .form-label-dark {
+        color: #d0d0d0;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: transform 0.2s;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+    
+    .text-link {
+        color: #3498db;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .text-link:hover {
+        color: #5dade2;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="container login-container">
+    <div class="card card-login" style="max-width: 450px; width: 100%;">
+        
+        <div class="card-header-login text-center">
+            <h3 class="text-white mb-2" style="font-family: 'Playfair Display', serif;">Welcome Back</h3>
+            <p class="text-readable-secondary mb-4">Secure access to your account</p>
             
-            <ul class="nav nav-pills nav-fill mt-3" id="loginTab" role="tablist">
+            <ul class="nav nav-pills nav-fill p-1 bg-dark rounded-3 border border-secondary" id="loginTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold" id="customer-tab" data-bs-toggle="tab" data-bs-target="#customer-pane" type="button">
-                        Customer
+                    <button class="nav-link active" id="customer-tab" data-bs-toggle="tab" data-bs-target="#customer-pane" type="button">
+                        <i class="bi bi-person me-1"></i> Customer
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold" id="employee-tab" data-bs-toggle="tab" data-bs-target="#employee-pane" type="button">
-                        Employee
+                    <button class="nav-link" id="employee-tab" data-bs-toggle="tab" data-bs-target="#employee-pane" type="button">
+                        <i class="bi bi-briefcase me-1"></i> Employee
                     </button>
                 </li>
             </ul>
         </div>
 
-        <div class="card-body p-4">
+        <div class="card-body p-4 pt-4">
             <div class="tab-content" id="loginTabContent">
+                
                 <div class="tab-pane fade show active" id="customer-pane">
                     <form method="POST">
                         <input type="hidden" name="user_type" value="customer">
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="customer_number" name="number" placeholder="123" required>
-                            <label for="customer_number">Customer Number</label>
+                        
+                        <div class="mb-4">
+                            <label class="form-label-dark">Customer Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-person-badge"></i></span>
+                                <input type="text" class="form-control form-control-dark-login" name="number" placeholder="e.g. 103" required>
+                            </div>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input type="password" class="form-control" id="customer_password" name="password" placeholder="Password" required>
-                            <label for="customer_password">Password</label>
+
+                        <div class="mb-4">
+                            <label class="form-label-dark">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control form-control-dark-login" name="password" placeholder="••••••••" required>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Login</button>
+
+                        <button type="submit" class="btn btn-primary btn-login w-100 py-2 mb-3">
+                            Login as Customer
+                        </button>
                     </form>
-                    <div class="text-center mt-3">
-                        <small class="text-muted">New here? <a href="{{ url_for('customer_signup') }}" class="text-decoration-none">Create an account</a></small>
+                    
+                    <div class="text-center mt-3 pt-3 border-top border-secondary">
+                        <small class="text-readable-secondary">Don't have an account? <a href="{{ url_for('customer_signup') }}" class="text-link">Sign up now</a></small>
                     </div>
                 </div>
                 
                 <div class="tab-pane fade" id="employee-pane">
                     <form method="POST">
                         <input type="hidden" name="user_type" value="employee">
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="employee_number" name="number" placeholder="1234" required>
-                            <label for="employee_number">Employee ID</label>
+
+                        <div class="mb-4">
+                            <label class="form-label-dark">Employee ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-card-heading"></i></span>
+                                <input type="text" class="form-control form-control-dark-login" name="number" placeholder="e.g. 1002" required>
+                            </div>
                         </div>
-                        <div class="form-floating mb-3">
-                            <input type="password" class="form-control" id="employee_password" name="password" placeholder="Password" required>
-                            <label for="employee_password">Password</label>
+
+                        <div class="mb-4">
+                            <label class="form-label-dark">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-shield-lock"></i></span>
+                                <input type="password" class="form-control form-control-dark-login" name="password" placeholder="••••••••" required>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-dark w-100 py-2 fw-bold">Employee Access</button>
+
+                        <button type="submit" class="btn btn-dark w-100 py-2 btn-login" style="background: linear-gradient(135deg, #2c3e50, #4ca1af);">
+                           Login as Employee
+                        </button>
                     </form>
                 </div>
+
             </div>
         </div>
     </div>

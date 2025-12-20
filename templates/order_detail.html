@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 
+
 {% block content %}
 <div class="container mt-5 mb-5">
     
@@ -154,7 +155,7 @@
                 {% endif %}
 
                 {% if session.get('user_type') == 'employee' %}
-                    <a href="{{ url_for('employee_view_customer_orders', customer_num=order.customerNumber) }}" class="btn btn-outline-light mt-3">
+                    <a href="{{ url_for('employee_view_customer_orders', customer_num=order.customerNumber) }}" class="btn btn-outline-light mt-3"  style="background-color: #0e3a6d;">
                         <i class="bi bi-arrow-left me-2"></i> Back to Customer Orders
                     </a>
                 {% else %}
