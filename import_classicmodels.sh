@@ -14,6 +14,11 @@ read -s -p "MySQL password: " PASS
 echo
 export MYSQL_PWD="$PASS"
 
+# Drop any existing database first to ensure a clean import
+mysql -h "$HOST" -P "$PORT" -u "$USER" --default-character-set=utf8mb4 \
+  -e "DROP DATABASE IF EXISTS ${DB};" \
+  || { echo "Failed to drop existing database ${DB}"; unset MYSQL_PWD; exit 1; }
+
 # Create database with utf8mb4
 mysql -h "$HOST" -P "$PORT" -u "$USER" --default-character-set=utf8mb4 \
   -e "CREATE DATABASE IF NOT EXISTS ${DB} CHARACTER SET utf8mb4 COLLATE=utf8mb4_general_ci;" \
