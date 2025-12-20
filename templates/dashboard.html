@@ -1,258 +1,279 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2 class="text-center mb-4">Employee Dashboard</h2>
+<div class="container mt-5 mb-5">
 
-<p class="lead">Welcome, {{ session.get("user_name") }}! (Employee #{{ session.get('user_number') }})</p>
-
-<hr class="my-5">
-
-{% if is_sales_rep or is_manager %}
-
-{% if is_manager %}
-<h3>All Customers (Management View)</h3>
-<p class="text-muted">Select a customer to manage orders and payments.</p>
-{% else %}
-<h3>Your Assigned Customers</h3>
-{% endif %}
-
-{% if customers %}
-<form method="GET" class="row g-2 mb-3">
-
-    <div class="col-md-6">
-        <input type="text" name="search" class="form-control" placeholder="Search customers..."
-            value="{{ search_query }}">
-    </div>
-
-    <div class="col-md-4">
-        <select name="sort" class="form-select">
-            <option value="none" {% if sort_order=='none' %}selected{% endif %}>Click to Sort</option>
-            <option value="asc" {% if sort_order=='asc' %}selected{% endif %}>Lowest to Highest</option>
-            <option value="desc" {% if sort_order=='desc' %}selected{% endif %}>Highest to Lowest</option>
-        </select>
-    </div>
-
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Apply</button>
-    </div>
-</form>
-
-<div class="list-group shadow-sm mb-5" style="max-height: 500px; overflow-y: auto;" >
-    {% for customer in customers %}
-    <a href="{{ url_for('employee_view_customer_orders', customer_num=customer.customerNumber) }}"
-        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-        <div>
-            <div class="fw-bold">{{ customer.customerName }}</div>
-            <small class="text-muted">
-                {{ customer.city }}, {{ customer.country }}
-
-                {% if is_manager and customer.salesRepEmployeeNumber %}
-                <span class="badge bg-secondary ms-2" style="font-size: 0.7em;">Rep #{{ customer.salesRepEmployeeNumber
-                    }}</span>
-                {% endif %}
-            </small>
-        </div>
-        <div class="text-end">
-            <span class="badge bg-primary rounded-pill mb-1">ID: {{ customer.customerNumber }}</span><br>
-
-            {% if customer.balance is defined %}
-            {% if customer.balance > 0 %}
-            <span class="badge bg-danger">Debt: ${{ "%.2f"|format(customer.balance) }}</span>
-            {% else %}
-            <span class="badge bg-success">No Debt</span>
-            {% endif %}
-            {% endif %}
-            {% if customer.totalSpend is defined %}
-            <span class="badge bg-info">Spent: ${{ "%.2f"|format(customer.totalSpend) }}</span>
-            {% endif %}
-        </div>
-    </a>
-    {% endfor %}
-</div>
-{% else %}
-<div class="alert alert-warning">No customers found.</div>
-{% endif %}
-
-{% endif %}
-
-<hr class="my-5">
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Submit Weekly Report</h5>
-            </div>
-            <div class="card-body">
-                <form action="{{ url_for('create_report') }}" method="POST">
-                    <div class="mb-3">
-                        <label for="report_content" class="form-label">Report Content</label>
-                        <textarea class="form-control" id="report_content" name="report_content" rows="4" required
-                            placeholder="What did you accomplish this week?"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Submit Report</button>
-                </form>
-            </div>
+    <!-- PAGE HEADER -->
+    <div class="page-header mb-5">
+        <h2 class="dashboard-title mb-0">Employee Dashboard</h2>
+        <div class="text-white-50 small mt-1">
+            Welcome, {{ session.get("user_name") }}! (Employee #{{ session.get('user_number') }})
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">My Recent Reports</h5>
-            </div>
-            <div class="card-body">
-                {% if my_reports %}
-                <div class="list-group list-group-flush">
-                    {% for report in my_reports %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <small class="text-muted">{{ report.reportDate }}</small>
-                        </div>
-                        <p class="mb-1">{{ report.reportContent }}</p>
-                    </div>
-                    {% endfor %}
+    {% if is_sales_rep or is_manager %}
+
+    {% if is_manager %}
+    <div class="mb-4">
+        <h3 class="text-white">All Customers <span class="fs-6 text-white-50 fw-normal ms-2">(Management View)</span>
+        </h3>
+        <p class="text-secondary small">Select a customer to manage orders and payments.</p>
+    </div>
+    {% else %}
+    <div class="mb-4">
+        <h3 class="text-white">Your Assigned Customers</h3>
+    </div>
+    {% endif %}
+
+    {% if customers %}
+    <div class="card card-dark card-static mb-5">
+        <div class="card-body">
+            <!-- Search & Sort Forms -->
+            <form method="GET" class="row g-2 mb-4">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control bg-dark text-white border-secondary"
+                        placeholder="Search customers..." value="{{ search_query }}">
                 </div>
-                {% else %}
-                <p class="text-muted">No reports submitted yet.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
 
-
-
-{% if team_reports %}
-<div class="card shadow-sm mt-4">
-    <div class="card-header bg-info text-white">
-        <h5 class="mb-0">Team Reports (Subordinates)</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>ID</th>
-                        <th>Job Title</th>
-                        <th>Date</th>
-                        <th>Report</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for report in team_reports %}
-                    <tr>
-                        <td>{{ report.firstName }} {{ report.lastName }}</td>
-                        <td>{{ report.employeeNumber }}</td>
-                        <td>{{ report.jobTitle }}</td>
-                        <td>{{ report.reportDate }}</td>
-                        <td>{{ report.reportContent }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-{% if subordinates %}
-<div class="card shadow-sm mt-4">
-    <div class="card-header bg-success text-white">
-        <h5 class="mb-0">My Subordinates</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>ID</th>
-                        <th>Email</th>
-                        <th>Job Title</th>
-                        <th>Office</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for sub in subordinates %}
-                    <tr>
-                        <td>{{ sub.firstName }} {{ sub.lastName }}</td>
-                        <td>{{ sub.employeeNumber }}</td>
-                        <td>{{ sub.email }}</td>
-                        <td>{{ sub.jobTitle }}</td>
-                        <td>{{ sub.city }}</td>
-                        <td>
-                            {% if sub.jobTitle == 'Sales Rep' %}
-                            <form action="{{ url_for('fire_employee', employee_id=sub.employeeNumber) }}" method="POST"
-                                onsubmit="return confirm('Are you sure you want to fire {{ sub.firstName }}? This cannot be undone.');">
-                                <button type="submit" class="btn btn-danger btn-sm">Fire</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-
-
-{% if is_manager %}
-<!-- NEW: Analytics Section -->
-<hr class="my-5">
-
-<div class="card shadow-sm mb-4 border-primary">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Management: Add New Sales Rep</h5>
-        <small>New reps will report to you</small>
-    </div>
-    <div class="card-body">
-        <form action="{{ url_for('add_employee') }}" method="POST">
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="firstName" class="form-label">First Name</label>
-                    <input type="text" class="form-control" id="firstName" name="firstName" required>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="lastName" class="form-label">Last Name</label>
-                    <input type="text" class="form-control" id="lastName" name="lastName" required>
-                </div>
-                <div class="col-md-2 mb-3">
-                    <label for="extension" class="form-label">Extension</label>
-                    <input type="text" class="form-control" id="extension" name="extension" placeholder="e.g. x1234"
-                        required>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-            </div>
-            <div class="row align-items-end">
-                <div class="col-md-6 mb-3">
-                    <label for="officeCode" class="form-label">Office Assignment</label>
-                    <select class="form-select" id="officeCode" name="officeCode" required>
-                        <option value="" selected disabled>Select an Office...</option>
-                        {% for office in offices %}
-                        <option value="{{ office.officeCode }}">
-                            {{ office.city }}, {{ office.country }} ({{ office.employee_count }} employees)
-                        </option>
-                        {% endfor %}
+                <div class="col-md-4">
+                    <select name="sort" class="form-select bg-dark text-white border-secondary">
+                        <option value="none" {% if sort_order=='none' %}selected{% endif %}>Click to Sort</option>
+                        <option value="asc" {% if sort_order=='asc' %}selected{% endif %}>Lowest to Highest</option>
+                        <option value="desc" {% if sort_order=='desc' %}selected{% endif %}>Highest to Lowest</option>
                     </select>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <button type="submit" class="btn btn-outline-primary w-100 fw-bold">
-                        <i class="bi bi-person-plus-fill"></i> Add Sales Rep
-                    </button>
-                    <div class="form-text text-center mt-1">A random password will be generated and shown once.</div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-light w-100">Apply</button>
+                </div>
+            </form>
+
+            <!-- Customers List (Styled as Cards/Grid or List) -->
+            <div class="list-group shadow-sm" style="max-height: 500px; overflow-y: auto;">
+                {% for customer in customers %}
+                <a href="{{ url_for('employee_view_customer_orders', customer_num=customer.customerNumber) }}"
+                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center bg-dark text-white border-secondary">
+                    <div>
+                        <div class="fw-bold text-info">{{ customer.customerName }}</div>
+                        <small class="text-white-50">
+                            {{ customer.city }}, {{ customer.country }}
+
+                            {% if is_manager and customer.salesRepEmployeeNumber %}
+                            <span class="badge bg-secondary ms-2 text-dark" style="font-size: 0.7em;">Rep #{{
+                                customer.salesRepEmployeeNumber
+                                }}</span>
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary rounded-pill mb-1">ID: {{ customer.customerNumber }}</span><br>
+
+                        {% if customer.balance is defined %}
+                        {% if customer.balance > 0 %}
+                        <span class="badge bg-danger">Debt: ${{ "%.2f"|format(customer.balance) }}</span>
+                        {% else %}
+                        <span class="badge bg-success">No Debt</span>
+                        {% endif %}
+                        {% endif %}
+                        {% if customer.totalSpend is defined %}
+                        <span class="badge bg-info text-dark">Spent: ${{ "%.2f"|format(customer.totalSpend) }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">No customers found.</div>
+    {% endif %}
+
+    {% endif %}
+
+    <!-- REPORTS SECTION -->
+    <div class="row g-4 mb-5">
+        <!-- Submit Report -->
+        <div class="col-md-6">
+            <div class="card card-dark h-100">
+                <div class="card-header-dark">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Submit Weekly Report</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('create_report') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="report_content" class="form-label text-white-50">Report Content</label>
+                            <textarea class="form-control bg-dark text-white border-secondary" id="report_content"
+                                name="report_content" rows="6" required
+                                placeholder="What did you accomplish this week?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Submit Report</button>
+                    </form>
                 </div>
             </div>
-        </form>
-    </div>
-</div>
-{% endif %}
+        </div>
 
+        <!-- My Recent Reports -->
+        <div class="col-md-6">
+            <div class="card card-dark h-100">
+                <div class="card-header-dark">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>My Recent Reports</h5>
+                </div>
+                <div class="card-body">
+                    {% if my_reports %}
+                    <div class="list-group list-group-flush">
+                        {% for report in my_reports %}
+                        <div class="list-group-item bg-transparent border-secondary text-white ps-0 pe-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <small class="text-info">{{ report.reportDate }}</small>
+                            </div>
+                            <p class="mb-1 text-white-50">{{ report.reportContent }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-white-50">No reports submitted yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEAM REPORTS -->
+    {% if team_reports %}
+    <div class="card card-dark mb-5">
+        <div class="card-header-dark">
+            <h5 class="mb-0">Team Reports (Subordinates)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark-custom table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>ID</th>
+                            <th>Job Title</th>
+                            <th>Date</th>
+                            <th>Report</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in team_reports %}
+                        <tr>
+                            <td class="fw-bold">{{ report.firstName }} {{ report.lastName }}</td>
+                            <td>{{ report.employeeNumber }}</td>
+                            <td>{{ report.jobTitle }}</td>
+                            <td>{{ report.reportDate }}</td>
+                            <td>{{ report.reportContent }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- SUBORDINATES -->
+    {% if subordinates %}
+    <div class="card card-dark mb-5">
+        <div class="card-header-dark">
+            <h5 class="mb-0">My Subordinates</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark-custom table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Job Title</th>
+                            <th>Office</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in subordinates %}
+                        <tr>
+                            <td>{{ sub.firstName }} {{ sub.lastName }}</td>
+                            <td>{{ sub.employeeNumber }}</td>
+                            <td>{{ sub.email }}</td>
+                            <td>{{ sub.jobTitle }}</td>
+                            <td>{{ sub.city }}</td>
+                            <td>
+                                {% if sub.jobTitle == 'Sales Rep' %}
+                                <form action="{{ url_for('fire_employee', employee_id=sub.employeeNumber) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Are you sure you want to fire {{ sub.firstName }}? This cannot be undone.');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Fire</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- ADD NEW SALES REP (Manager Only) -->
+    {% if is_manager %}
+    <div class="card card-dark border-secondary">
+        <div class="card-header-dark d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Management: Add New Sales Rep</h5>
+            <small class="text-white-50">New reps will report to you</small>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('add_employee') }}" method="POST">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="firstName" class="form-label text-white-50">First Name</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="firstName"
+                            name="firstName" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="lastName" class="form-label text-white-50">Last Name</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="lastName"
+                            name="lastName" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="extension" class="form-label text-white-50">Extension</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="extension"
+                            name="extension" placeholder="e.g. x1234" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="email" class="form-label text-white-50">Email</label>
+                        <input type="email" class="form-control bg-dark text-white border-secondary" id="email"
+                            name="email" required>
+                    </div>
+                </div>
+                <div class="row align-items-end">
+                    <div class="col-md-6 mb-3">
+                        <label for="officeCode" class="form-label text-white-50">Office Assignment</label>
+                        <select class="form-select bg-dark text-white border-secondary" id="officeCode"
+                            name="officeCode" required>
+                            <option value="" selected disabled>Select an Office...</option>
+                            {% for office in offices %}
+                            <option value="{{ office.officeCode }}">
+                                {{ office.city }}, {{ office.country }} ({{ office.employee_count }} employees)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">
+                            <i class="bi bi-person-plus-fill me-2"></i> Add Sales Rep
+                        </button>
+                        <div class="form-text text-white-50 text-center mt-1">A random password will be generated and
+                            shown once.</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
 {% endblock %}

@@ -35,13 +35,13 @@
 
     <!-- 2. Performance Matrix -->
     {% if analytics_matrix %}
-    <div class="card shadow-sm mb-5">
-        <div class="card-header bg-dark text-white">
+    <div class="card card-dark card-static mb-5">
+        <div class="card-header-dark">
             <h5 class="mb-0">Employee Performance (Revenue by Product Line)</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
+                <table class="table table-dark-custom table-hover">
                     <thead>
                         <tr>
                             <th>Sales Rep</th>
@@ -65,7 +65,7 @@
             <div class="d-flex justify-content-center align-items-center mt-3 gap-3 mb-3">
                 {% if analytics_page > 1 %}
                 <a href="{{ url_for('manager_analytics', analytics_page=analytics_page-1, search=search_query, sort=sort_order) }}#sales-analytics"
-                    class="btn btn-outline-secondary btn-sm">
+                    class="btn btn-outline-light btn-sm">
                     <i class="bi bi-arrow-left"></i> Previous
                 </a>
                 {% else %}
@@ -73,12 +73,12 @@
                     Previous</button>
                 {% endif %}
 
-                <span class="text-muted small">Page {{ analytics_page }}</span>
+                <span class="text-white-50 small">Page {{ analytics_page }}</span>
 
                 <!-- Next Logic -->
                 {% if analytics_matrix|length == 10 %}
                 <a href="{{ url_for('manager_analytics', analytics_page=analytics_page+1, search=search_query, sort=sort_order) }}#sales-analytics"
-                    class="btn btn-outline-secondary btn-sm">
+                    class="btn btn-outline-light btn-sm">
                     Next <i class="bi bi-arrow-right"></i>
                 </a>
                 {% else %}
@@ -101,12 +101,15 @@
                     <select name="sales_office_filter" class="form-select bg-dark text-white border-secondary">
                         <option value="">All Offices</option>
                         {% for office in offices %}
-                        <option value="{{ office.city }}" {% if sales_office_filter == office.city %}selected{% endif %}>{{ office.city }}</option>
+                        <option value="{{ office.city }}" {% if sales_office_filter==office.city %}selected{% endif %}>
+                            {{ office.city }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <input type="text" name="sales_office_search" value="{{ sales_office_search }}" class="form-control bg-dark text-white border-secondary" placeholder="Search by office city or sales rep name">
+                    <input type="text" name="sales_office_search" value="{{ sales_office_search }}"
+                        class="form-control bg-dark text-white border-secondary"
+                        placeholder="Search by office city or sales rep name">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-outline-light w-100">Filter</button>
@@ -189,7 +192,7 @@
 </div>
 {% endif %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         if (window.location.hash && window.location.hash.indexOf('sales-analytics') !== -1) {
             const el = document.getElementById('sales-analytics');
             if (el) {
