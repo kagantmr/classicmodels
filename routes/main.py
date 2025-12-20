@@ -16,7 +16,7 @@ def init_main_routes(app, database):
 
     @app.route('/productlines')
     def productlines():
-        productlines_data = db.execute_query(("SELECT productLine, textDescription FROM productlines"))
+        productlines_data = db.execute_query("SELECT productLine, textDescription FROM productlines")
         return render_template('productlines.html', productlines=productlines_data)
 
     @app.route("/products/<product_line>")
