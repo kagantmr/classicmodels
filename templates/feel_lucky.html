@@ -1,23 +1,152 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow text-center">
-      <div class="card-body">
-        <h4 class="mb-3">🍀 Your Lucky Pick</h4>
+
+<style>
+  body {
+    background-color: #1a1e2b;
+    color: #e0e0e0;
+  }
+
+  .lucky-card-dark {
+    background-color: #252a37;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .lucky-card-dark:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.45);
+  }
+
+  .lucky-title {
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+  }
+
+  .lucky-item {
+    background-color: #2c3140;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+  }
+
+  .lucky-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8795a1;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .lucky-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #e0e0e0;
+  }
+
+  .lucky-link {
+    cursor: pointer;
+    color: #3498db;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  .lucky-link:hover {
+    color: #5dade2;
+    text-decoration: underline;
+  }
+
+  .empty-text {
+    color: #adb5bd;
+  }
+
+  .scene {
+  perspective: 1200px;
+}
+
+.lucky-card-animated {
+  transform-style: preserve-3d;
+  animation: introSpin 1.6s ease-out forwards;
+}
+
+@keyframes introSpin {
+  0% {
+    transform: scale(1.08) rotateY(0deg);
+  }
+  100% {
+    transform: scale(1.08) rotateY(360deg);
+  }
+}
+
+.lucky-card-normal {
+  animation: settleDown 0.6s ease-in-out forwards;
+}
+
+@keyframes settleDown {
+  from {
+    transform: scale(1.08) rotateY(360deg);
+  }
+  to {
+    transform: scale(1) rotateY(0deg);
+  }
+}
+
+</style>
+
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6 col-lg-5 scene">
+    <div id="luckyCard" class="card lucky-card-dark lucky-card-animated text-center">
+      <div class="card-body p-4">
+
+        <h4 class="lucky-title mb-4">
+          🍀 Your Lucky Pick
+        </h4>
 
         {% if lucky %}
-          <p><strong>City to visit:</strong> {{ lucky.city_to_visit }}</p>
-          <p role="button" onclick="window.location.href='/product/{{ lucky.productCode }}'">
-            <strong>Product to buy:</strong>{{ lucky.product_to_buy }}
-           </p>
+          <div class="lucky-item">
+            <span class="lucky-label">City to visit</span>
+            <div class="lucky-value">{{ lucky.city_to_visit }}</div>
+          </div>
 
-          <p><strong>Lucky number:</strong> {{ lucky.lucky_number }}</p>
+          <div class="lucky-item">
+            <span class="lucky-label">Product to buy</span>
+            <div class="lucky-link"
+                 onclick="window.location.href='/product/{{ lucky.productCode }}'">
+              {{ lucky.product_to_buy }}
+            </div>
+          </div>
+
+          <div class="lucky-item">
+            <span class="lucky-label">Lucky number</span>
+            <div class="lucky-value">{{ lucky.lucky_number }}</div>
+          </div>
         {% else %}
-          <p class="text-muted">No lucky result found.</p>
+          <p class="empty-text">No lucky result found.</p>
         {% endif %}
+
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
+
+<script>
+  let settled = false;
+
+  document.addEventListener("click", () => {
+    if (settled) return;
+
+    const card = document.getElementById("luckyCard");
+    card.classList.remove("lucky-card-animated");
+    card.classList.add("lucky-card-normal");
+
+    settled = true;
+  }, { once: true });
+</script>
+

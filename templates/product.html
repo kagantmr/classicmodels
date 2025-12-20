@@ -1,10 +1,89 @@
 {% extends "layout.html" %}
 {% block content %}
+
+<style>
+  body {
+    background-color: #1a1e2b;
+    color: #e0e0e0;
+  }
+
+  /* Headings */
+  h2 {
+    color: #ffffff;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  /* Image container */
+  .product-image-box {
+    background-color: #252a37;
+    border-radius: 16px;
+    border: 1px solid #343a4d;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  }
+
+  /* Text */
+  .text-muted {
+    color: #9aa4af !important;
+  }
+
+  /* Price */
+  .price-highlight {
+    color: #2ecc71;
+    font-weight: 700;
+  }
+
+  /* Stock indicator */
+  .text-success {
+    color: #2ecc71 !important;
+  }
+
+  .text-danger {
+    color: #e74c3c !important;
+  }
+
+  /* Forms */
+  .form-control {
+    background-color: #252a37;
+    border: 1px solid #34495e;
+    color: #ffffff;
+    border-radius: 10px;
+  }
+
+  .form-control:focus {
+    background-color: #252a37;
+    color: #ffffff;
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: #3498db;
+    border: none;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.6rem 1.5rem;
+  }
+
+  .btn-primary:hover {
+    background-color: #2980b9;
+  }
+
+  /* Alerts */
+  .alert-info {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: #5dade2;
+    border: 1px solid #3498db;
+  }
+</style>
+
+
 <div class="container mt-4">
   <div class="row">
     <div class="col-md-6">
       <!-- Placeholder image, you can later store image URLs in DB -->
-      <div class="border rounded p-3 text-center">
+      <div class="border product-image-box rounded p-3 text-center">
         <img src="https://via.placeholder.com/400x300?text={{ product.productName | urlencode }}"
           alt="{{ product.productName }}" class="img-fluid">
       </div>
@@ -27,7 +106,7 @@
 
       <p class="mb-3">{{ product.productDescription }}</p>
 
-      <p class="h4 mb-2">
+      <p class="h4 mb-2 price-highlight">
         Price:
         {% if product.MSRP %}
         ${{ "%.2f"|format(product.MSRP) }}

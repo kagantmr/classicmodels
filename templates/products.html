@@ -1,5 +1,76 @@
 {% extends "layout.html" %}
 {% block content %}
+
+<style>
+  body {
+    background-color: #1a1e2b;
+    color: #e0e0e0;
+  }
+
+  h2 {
+    color: #ffffff;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  /* Sort dropdown */
+  .form-select {
+    background-color: #252a37;
+    color: #e0e0e0;
+    border: 1px solid #34495e;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .form-select:focus {
+    background-color: #252a37;
+    color: #ffffff;
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52,152,219,0.25);
+  }
+
+  /* Product cards */
+  .product-card-dark {
+    background-color: #252a37;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .product-card-dark:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.45);
+  }
+
+  .product-card-dark .card-body {
+    cursor: pointer;
+  }
+
+  .product-card-dark .card-title {
+    color: #ffffff;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-card-dark .card-text {
+    color: #cfd6dd;
+    font-size: 0.9rem;
+  }
+
+  .product-card-dark .text-danger {
+    color: #e74c3c !important;
+  }
+
+  .product-card-dark .text-success {
+    color: #2ecc71 !important;
+  }
+
+  .product-card-dark .text-muted {
+    color: #8795a1 !important;
+  }
+</style>
+
 <h2 class="text-center mb-4">{{ product_line }}</h2>
 
 <!-- Sort dropdown -->
@@ -17,7 +88,7 @@
 <div class="row">
   {% for product in products %}
   <div class="col-md-4 mb-4">
-    <div class="card h-100">
+    <div class="card h-100 product-card-dark">
       <div class="card-body" role="button" onclick="window.location.href='/product/{{ product.productCode }}'">
         <h5 class="card-title">{{ product.productName }}</h5>
         <p class="card-text">Scale: {{ product.productScale }}</p>
