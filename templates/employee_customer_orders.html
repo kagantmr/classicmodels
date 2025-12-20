@@ -395,10 +395,6 @@
                 <div>
                     <h5 class="mb-0 text-white fw-bold"><i class="bi bi-wallet2 me-2"></i>Payment History</h5>
                 </div>
-                <a href="{{ url_for('edit_payment', customer_number=customer.customerNumber, check_number='new') }}" 
-                   class="btn btn-light btn-sm fw-bold shadow-sm" style="color: #0e3a6d;">
-                    <i class="bi bi-plus-lg"></i> Record Payment
-                </a>
             </div>
             
             <div class="table-responsive">
@@ -419,6 +415,7 @@
                                 <td class="text-white fw-bold font-monospace">{{ p.checkNumber }}</td>
                                 <td class="text-end text-success fw-bold">${{ "{:,.2f}".format(p.amount) }}</td>
                                 <td class="text-end pe-4">
+                                    {% if is_manager %}
                                     <div class="btn-group" role="group">
                                         <a href="{{ url_for('edit_payment', customer_number=customer_num, check_number=p.checkNumber) }}" 
                                            class="btn btn-sm text-warning" title="Edit">
@@ -428,6 +425,7 @@
                                             <button class="btn btn-sm text-danger" title="Delete"><i class="bi bi-trash-fill"></i></button>
                                         </form>
                                     </div>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

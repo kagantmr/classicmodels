@@ -182,6 +182,7 @@ class DatabaseHandler:
             FROM orderdetails od
             JOIN products p ON od.productCode = p.productCode
             WHERE od.orderNumber = %s
+            ORDER BY od.orderLineNumber
         """
         return self.execute_query(query, (order_number,))
     
