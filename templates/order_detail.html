@@ -2,6 +2,14 @@
 
 
 {% block content %}
+
+<style>
+    .form-control::placeholder {
+        color: #989da1 !important;
+        opacity: 1 !important;
+    }
+</style>
+
 <div class="container mt-5 mb-5">
     
     <div class="d-flex justify-content-between align-items-center page-header">
@@ -155,7 +163,7 @@
                 {% endif %}
 
                 {% if session.get('user_type') == 'employee' %}
-                    <a href="{{ url_for('employee_view_customer_orders', customer_num=order.customerNumber) }}" class="btn btn-outline-light mt-3"  style="background-color: #0e3a6d;">
+                    <a href="{{ url_for('employee_view_customer_orders', customer_num=order.customerNumber) }}" class="btn btn-outline-light mt-3"  style="background-color: #0e3a6d; border-color: #0e3a6d;">
                         <i class="bi bi-arrow-left me-2"></i> Back to Customer Orders
                     </a>
                 {% else %}

@@ -947,7 +947,8 @@ class DatabaseHandler:
                     o.status, 
                     DATE_FORMAT(o.orderDate, '%Y-%m-%d %b %M %W'),
                     items_summary, 
-                    totalAmount
+                    totalAmount,
+                    o.comments
                 ) REGEXP %s
             """
             having_conditions.append(search_sql)
@@ -960,13 +961,13 @@ class DatabaseHandler:
         # sorting
         sort_option = filters.get('sort_option', 'date_desc')
         if sort_option == 'date_asc':
-            query += " ORDER BY o.orderDate ASC"
+            query += " ORDER BY o.orderNumber ASC"
         elif sort_option == 'price_asc':
             query += " ORDER BY totalAmount ASC"
         elif sort_option == 'price_desc':
             query += " ORDER BY totalAmount DESC"
         else:
-            query += " ORDER BY o.orderDate DESC"
+            query += " ORDER BY o.orderNumber DESC"
 
         return self.execute_query(query, params)
 

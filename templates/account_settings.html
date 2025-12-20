@@ -285,25 +285,24 @@
                 <h6 class="text-white mb-1">Password</h6>
                 <p class="text-readable-secondary small mb-0">Update your password regularly to keep your account secure.</p>
             </div>
-            <a href="{{ url_for('change_password') }}" class="btn btn-outline-light" style="background-color: #0e3a6d;">
+            <a href="{{ url_for('change_password') }}" class="btn btn-outline-light" style="background-color: #0e3a6d; border-color: #34495e;">
                 Change Password
             </a>
         </div>
     </div>
 
     {% if user_type == 'customer' %}
-    <div class="card card-settings" style="border-color: #741b1b;">
+    <div class="card card-settings" style="border-color: #34495e;">
         <div class="card-header-settings header-danger">
-            <strong class="fs-5"><i class="bi bi-exclamation-triangle me-2"></i> Danger Zone</strong>
+            <strong class="fs-5"><i class="bi bi-exclamation-triangle me-2"></i>DELETE ACCOUNT</strong>
         </div>
         <div class="card-body p-4">
-            <h5 class="text-white mb-2">Delete Account</h5>
             <p class="text-readable-secondary mb-4" style="max-width: 600px;">
                 Permanently remove your Personal Data, Order History, and Account Information from our servers. 
                 This action is <strong>not reversible</strong>.
             </p>
             
-            <button onclick="handleDeleteRequest({{ balance if balance else 0 }})" class="btn btn-outline-danger">
+            <button onclick="handleDeleteRequest({{ balance if balance else 0 }})" class="btn btn-outline-danger" style="background-color: #741b1b; color: white; border-color: #34495e;">
                 Delete My Account
             </button>
         </div>

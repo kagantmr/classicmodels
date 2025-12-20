@@ -1,86 +1,207 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="container mt-4" style="max-width: 700px;">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">
-                {% if mode == 'edit' %} Edit Office: {{ office.city }} {% else %} Add New Office {% endif %}
+<style>
+    .office-form-container {
+        max-width: 750px;
+        margin: 0 auto;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+    }
+
+    .card-dark {
+        background-color: #252a37;
+        border: 1px solid #34495e;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+
+    .card-header-primary {
+        background: linear-gradient(135deg, #0e3a6d, #164f91);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #34495e;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .form-label-dark {
+        color: #e0e0e0;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control-dark {
+        background-color: #1a1e2b;
+        border: 1px solid #34495e;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .form-control-dark:focus {
+        background-color: #1a1e2b;
+        border-color: #0e3a6d;
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(14, 58, 109, 0.25);
+    }
+
+    .form-control-dark::placeholder {
+        color: #6c757d;
+    }
+
+    /* Readonly (Değiştirilemez) Alanlar için Özel Stil */
+    .form-control-dark[readonly] {
+        background-color: #202430; /* Inputtan biraz daha açık, karttan koyu */
+        color: #adb5bd; /* Gümüş gri */
+        border-color: #2c3e50;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+
+    .btn-primary-dark {
+        background-color: #0e3a6d;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+
+    .btn-primary-dark:hover {
+        background-color: #164f91;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        color: white;
+    }
+
+    .btn-secondary-dark {
+        background-color: transparent;
+        border: 1px solid #6c757d;
+        color: #adb5bd;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary-dark:hover {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #fff;
+        border-color: #fff;
+    }
+</style>
+
+<div class="container office-form-container">
+    <div class="card card-dark">
+        
+        <div class="card-header-primary">
+            <h4 class="text-white mb-0" style="font-family: 'Playfair Display', serif;">
+                {% if mode == 'edit' %} 
+                    <i class="bi bi-pencil-square me-2"></i>Edit Office
+                {% else %} 
+                    <i class="bi bi-building-add me-2"></i>New Office
+                {% endif %}
             </h4>
+            {% if mode == 'edit' %}
+            <span class="badge bg-white text-dark">{{ office.city }}</span>
+            {% endif %}
         </div>
-        <div class="card-body">
+
+        <div class="card-body p-4 p-md-5">
             
             {% if mode == 'add' %}
-            <div class="alert alert-info small">
-                All fields marked with * are required.
+            <div class="alert alert-info border-info bg-transparent text-info mb-4 d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <div>All fields marked with <span class="fw-bold">*</span> are required.</div>
             </div>
             {% endif %}
 
             <form method="POST">
                 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Office Code *</label>
-                    <input type="text" name="officeCode" class="form-control" 
-                           value="{{ office.officeCode if office else '' }}"
-                           {% if mode == 'edit' %} readonly style="background-color: #e9ecef;" {% else %} required {% endif %}>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">City *</label>
-                        <input type="text" name="city" class="form-control" 
-                               value="{{ office.city if office else '' }}"
-                               {% if mode == 'edit' %} readonly style="background-color: #e9ecef;" {% else %} required {% endif %}>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label-dark">Office Code {% if mode == 'add' %}*{% endif %}</label>
+                        <input type="text" name="officeCode" class="form-control form-control-dark" 
+                               value="{{ office.officeCode if office else '' }}"
+                               {% if mode == 'edit' %} readonly {% else %} required {% endif %}>
                     </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Country *</label>
-                        <input type="text" name="country" class="form-control" 
-                               value="{{ office.country if office else '' }}"
-                               {% if mode == 'edit' %} readonly style="background-color: #e9ecef;" {% else %} required {% endif %}>
+                    <div class="col-md-8">
+                        <label class="form-label-dark">City {% if mode == 'add' %}*{% endif %}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-geo-alt"></i></span>
+                            <input type="text" name="city" class="form-control form-control-dark" 
+                                   value="{{ office.city if office else '' }}"
+                                   {% if mode == 'edit' %} readonly {% else %} required {% endif %}>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Phone *</label>
-                    <input type="text" name="phone" class="form-control" 
-                           value="{{ office.phone if office else '' }}" required>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label-dark">Phone Number *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-telephone"></i></span>
+                            <input type="text" name="phone" class="form-control form-control-dark" 
+                                   value="{{ office.phone if office else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-dark">Country {% if mode == 'add' %}*{% endif %}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-globe"></i></span>
+                            <input type="text" name="country" class="form-control form-control-dark" 
+                                   value="{{ office.country if office else '' }}"
+                                   {% if mode == 'edit' %} readonly {% else %} required {% endif %}>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Address Line 1 *</label>
-                    <input type="text" name="addressLine1" class="form-control" 
+                <div class="mb-4">
+                    <label class="form-label-dark">Address Line 1 *</label>
+                    <input type="text" name="addressLine1" class="form-control form-control-dark" 
                            value="{{ office.addressLine1 if office else '' }}" required>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Address Line 2</label>
-                    <input type="text" name="addressLine2" class="form-control" 
-                           value="{{ office.addressLine2 if office else '' }}">
+                <div class="mb-4">
+                    <label class="form-label-dark">Address Line 2 <span class="text-muted small">(Optional)</span></label>
+                    <input type="text" name="addressLine2" class="form-control form-control-dark" 
+                           value="{{ office.addressLine2 if office and office.addressLine2 else '' }}">
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">State</label>
-                        <input type="text" name="state" class="form-control" 
+                <div class="row mb-5">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="form-label-dark">State</label>
+                        <input type="text" name="state" class="form-control form-control-dark" 
                                value="{{ office.state if office and office.state else '' }}">
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Postal Code *</label>
-                        <input type="text" name="postalCode" class="form-control" 
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="form-label-dark">Postal Code *</label>
+                        <input type="text" name="postalCode" class="form-control form-control-dark" 
                                value="{{ office.postalCode if office else '' }}" required>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">Territory *</label>
-                        <input type="text" name="territory" class="form-control" 
+                    <div class="col-md-4">
+                        <label class="form-label-dark">Territory *</label>
+                        <input type="text" name="territory" class="form-control form-control-dark" 
                                value="{{ office.territory if office else '' }}" required>
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between mt-3">
-                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-success">
-                        {% if mode == 'edit' %} Update Office {% else %} Create Office {% endif %}
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary-dark">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary-dark">
+                        {% if mode == 'edit' %} 
+                            Update Office Details 
+                        {% else %} 
+                            Create Office 
+                        {% endif %}
                     </button>
                 </div>
 

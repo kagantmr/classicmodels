@@ -1,47 +1,103 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card border-danger shadow">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0">⚠ Permanent Account Deletion</h4>
-                </div>
-                <div class="card-body">
-                    <p class="lead text-danger">You are about to permanently delete your account.</p>
-                    
-                    <div class="alert alert-warning">
-                        <strong>Warning:</strong> This action cannot be undone. 
-                        All your personal data, order history, and payment records will be erased immediately.
-                    </div>
+<style>
+    .delete-container {
+        max-width: 500px; 
+        margin: 0 auto;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
 
-                    <form action="{{ url_for('delete_account') }}" method="POST">
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" name="password" required 
-                                   placeholder="Enter your password to confirm">
-                        </div>
+    .card-danger-dark {
+        background-color: #252a37;
+        border: 1px solid #2c3140;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
 
-                        <div class="mb-4 form-check">
-                            <input type="checkbox" class="form-check-input" name="confirm_checkbox" id="confirmCheck" required>
-                            <label class="form-check-label small text-muted" for="confirmCheck">
-                                I understand that this action is irreversible and all my data will be lost.
-                            </label>
-                        </div>
+    .card-header-danger {
+        background: linear-gradient(135deg, #741b1b, #a52828);
+        padding: 0.8rem 1rem; 
+        border-bottom: 1px solid #741b1b;
+        color: white;
+        text-align: center;
+    }
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger btn-lg">
-                                 Permanently Delete My Account
-                            </button>
-                            <a href="{{ url_for('account_settings') }}" class="btn btn-outline-secondary">
-                                Cancel, Keep My Account
-                            </a>
-                        </div>
-                    </form>
+    .form-control-dark {
+        background-color: #1a1e2b;
+        border: 1px solid #34495e;
+        color: #fff;
+        padding: 0.5rem 0.8rem; 
+        font-size: 0.9rem;
+    }
+    .form-control-dark:focus {
+        background-color: #1a1e2b;
+        border-color: #741b1b;
+        color: #fff;
+        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+    }
+
+    .alert-warning-dark {
+        background-color: rgba(241, 196, 15, 0.08);
+        border: 1px solid rgba(241, 196, 15, 0.2);
+        color: #f1c40f;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+    
+    .text-readable { color: #e0e0e0; font-size: 0.95rem; }
+    .text-readable-muted { color: #adb5bd; font-size: 0.85rem; }
+</style>
+
+<div class="container delete-container">
+    <div class="card card-danger-dark">
+        <div class="card-header-danger">
+            <i class="bi bi-exclamation-triangle-fill fs-4 mb-1 d-block"></i>
+            <h6 class="mb-0 fw-bold text-uppercase" style="letter-spacing: 0.5px;">Delete Account</h6>
+        </div>
+        <div class="card-body p-4">
+            
+            <p class="text-readable text-center mb-3">
+                Permanently delete your account?
+            </p>
+            
+            <div class="alert alert-warning-dark mb-3 d-flex align-items-center">
+                <i class="bi bi-info-circle me-2"></i>
+                <div>
+                    <strong>Warning:</strong> This action cannot be undone.
                 </div>
             </div>
+
+            <form action="{{ url_for('delete_account') }}" method="POST">
+                
+                <div class="mb-3">
+                    <label class="form-label text-readable-muted">Confirm Password</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-key"></i></span>
+                        <input type="password" class="form-control form-control-dark" name="password" required 
+                               placeholder="******">
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input bg-dark border-secondary" name="confirm_checkbox" id="confirmCheck" required>
+                    <label class="form-check-label small text-readable-muted" style="font-size: 0.8rem;" for="confirmCheck">
+                        I understand this is irreversible.
+                    </label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-danger btn-sm fw-bold" style="background-color: #741b1b ; border-color: #34495e;" >
+                        Delete Account
+                    </button>
+                    <a href="{{ url_for('account_settings') }}" class="btn btn-outline-secondary btn-sm border-secondary text-readable-muted">
+                        Cancel
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>

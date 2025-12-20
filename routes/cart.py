@@ -140,7 +140,7 @@ def init_cart_routes(app, database):
         if success:
             session["cart"] = {} 
             flash(f"Order #{result} placed successfully!", "success")
-            return redirect(url_for("customer_orders"))
+            return redirect(url_for("order_detail", order_number=result))
         else:
             flash(f"Failed to place order. Error: {result}", "danger")
             return redirect(url_for("view_cart"))

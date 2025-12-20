@@ -1,56 +1,183 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container mt-4">
-  <h2>Checkout</h2>
+<style>
+    .checkout-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+    }
 
-  <p class="text-muted">
-    Review your order below. You will be able to submit payment later.
-  </p>
+    .card-dark {
+        background-color: #252a37;
+        border: 1px solid #34495e;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
 
-  <h4 class="mt-4">Order Summary</h4>
-  <table class="table table-striped mt-2">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Unit Price</th>
-        <th>Quantity</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in cart.values() %}
-      <tr>
-        <td>{{ item.productName }}</td>
-        <td>${{ "%.2f"|format(item.priceEach) }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>${{ "%.2f"|format(item.priceEach * item.quantity) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    .card-header-primary {
+        background: linear-gradient(135deg, #0e3a6d, #164f91);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #34495e;
+    }
 
-  <div class="text-end mb-4">
-    <h4>Total: ${{ "%.2f"|format(total) }}</h4>
-  </div>
+    .table-dark-custom {
+        color: #e0e0e0;
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+    .table-dark-custom th {
+        background-color: #2c3140;
+        color: #adb5bd;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        border-bottom: 2px solid #34495e;
+        padding: 1rem;
+    }
+    .table-dark-custom td {
+        border-bottom: 1px solid #2c3e50;
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+    .table-dark-custom tr:last-child td {
+        border-bottom: none;
+    }
 
-  <form action="{{ url_for('place_order') }}" method="POST" class="mt-4">
-      
-      <div class="mb-4">
-          <label for="order_comments" class="form-label fw-bold">Order Notes (Optional)</label>
-          <textarea class="form-control" id="order_comments" name="order_comments" rows="3" 
-                    placeholder="Special instructions for delivery..."></textarea>
-      </div>
+    .form-control-dark {
+        background-color: #1a1e2b;
+        border: 1px solid #34495e;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+    .form-control-dark:focus {
+        background-color: #1a1e2b;
+        border-color: #0e3a6d;
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(14, 58, 109, 0.25);
+    }
+    .form-control-dark::placeholder {
+        color: #6c757d;
+    }
 
-      <div class="d-flex justify-content-between align-items-center">
-          <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary">
-            &larr; Back to cart
-          </a>
-          
-          <button type="submit" class="btn btn-success btn-lg px-5">
-            Place Order
-          </button>
-      </div>
-  </form>
+    .total-section {
+        background-color: #2c3140;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #34495e;
+        text-align: right;
+    }
 
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #0e3a6d, #164f91);
+        border: none;
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        border-radius: 8px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 10px rgba(14, 58, 109, 0.3);
+    }
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(14, 58, 109, 0.4);
+        color: white;
+    }
+
+    .text-readable-muted {
+        color: #adb5bd !important;
+    }
+</style>
+
+<div class="container checkout-container">
+    
+    <div class="mb-4 text-center text-md-start">
+        <h2 class="text-white fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Checkout</h2>
+        <p class="text-readable-muted">Review your items and complete your order.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card card-dark mb-4">
+                <div class="card-header-primary">
+                    <h5 class="text-white mb-0"><i class="bi bi-bag-check me-2"></i>Order Summary</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart.values() %}
+                            <tr>
+                                <td class="fw-bold text-white">{{ item.productName }}</td>
+                                <td class="text-end text-white-50">${{ "%.2f"|format(item.priceEach) }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ item.quantity }}</span>
+                                </td>
+                                <td class="text-end text-success fw-bold">${{ "%.2f"|format(item.priceEach * item.quantity) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card card-dark">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('place_order') }}" method="POST" id="checkoutForm">
+                        <label for="order_comments" class="form-label text-white fw-bold mb-2">
+                            <i class="bi bi-pencil-square me-2"></i>Order Notes <span class="text-muted fw-normal small">(Optional)</span>
+                        </label>
+                        <textarea class="form-control form-control-dark" id="order_comments" name="order_comments" rows="3" 
+                                  placeholder="Special instructions for delivery, gift wrap requests, etc."></textarea>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-dark">
+                <div class="card-body p-4">
+                    <h5 class="text-white mb-4">Payment Details</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Subtotal</span>
+                        <span class="text-white fw-bold">${{ "%.2f"|format(total) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-white-50">Shipping</span>
+                        <span class="text-success">Free</span>
+                    </div>
+                    
+                    <hr class="border-secondary my-3">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="h5 mb-0 text-white">Total</span>
+                        <span class="h3 mb-0 text-success fw-bold">${{ "%.2f"|format(total) }}</span>
+                    </div>
+
+                    <div class="alert alert-info bg-transparent border-info text-info small mb-4">
+                        <i class="bi bi-info-circle me-1"></i> Payment will be collected after order confirmation.
+                    </div>
+
+                    <button type="submit" form="checkoutForm" class="btn btn-primary-custom w-100 py-3 fs-5 mb-3">
+                        Place Order <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+
+                    <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary w-100 border-secondary text-readable-muted">
+                        Return to Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
