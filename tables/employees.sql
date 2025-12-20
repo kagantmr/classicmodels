@@ -10,12 +10,15 @@ CREATE TABLE `employees` (
   `firstName` varchar(50) NOT NULL,
   `extension` varchar(10) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `officeCode` int(11) NOT NULL,
+  `officeCode` varchar(10) NOT NULL,
   `reportsTo` int(11) DEFAULT NULL,
   `jobTitle` varchar(50) NOT NULL,
   PRIMARY KEY (`employeeNumber`),
   KEY `reportsTo` (`reportsTo`),
-  CONSTRAINT `employees_ibfk_1` FOREIGN KEY (`reportsTo`) REFERENCES `employees` (`employeeNumber`)
+  CONSTRAINT `fk_employees_reports_to` 
+  FOREIGN KEY (`reportsTo`) REFERENCES `employees` (`employeeNumber`),
+  CONSTRAINT `fk_employees_office` 
+  FOREIGN KEY (`officeCode`) REFERENCES `offices` (`officeCode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
