@@ -17,19 +17,27 @@
     <h3 class="mb-4" id="sales-analytics">Sales Analytics</h3>
 
     <!-- 1. Unproductive Employees Alert -->
+    <!-- 1. Unproductive Employees Alert -->
     {% if unproductive_employees %}
-    <div class="alert alert-danger shadow-sm">
-        <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> At Risk Employees (No Sales/Activity)
-        </h5>
-        <p>The following Sales Reps have <strong>zero orders</strong>.</p>
-        <ul class="mb-0">
-            {% for bad_emp in unproductive_employees %}
-            <li>
-                <strong>{{ bad_emp.firstName }} {{ bad_emp.lastName }}</strong> (ID: {{ bad_emp.employeeNumber }}) -
-                <a href="mailto:{{ bad_emp.email }}">{{ bad_emp.email }}</a>
-            </li>
-            {% endfor %}
-        </ul>
+    <div class="card card-dark border-danger mb-4">
+        <div class="card-header-dark text-danger border-danger">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>At Risk Employees (No Sales/Activity)
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-white-50">The following Sales Reps have <strong class="text-white">zero orders</strong>.</p>
+            <ul class="mb-0 text-white-50">
+                {% for bad_emp in unproductive_employees %}
+                <li class="mb-2">
+                    <strong class="text-white">{{ bad_emp.firstName }} {{ bad_emp.lastName }}</strong>
+                    (ID: <span class="text-info">{{ bad_emp.employeeNumber }}</span>) -
+                    <a href="mailto:{{ bad_emp.email }}" class="text-decoration-none text-danger">{{ bad_emp.email
+                        }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
     {% endif %}
 
