@@ -420,6 +420,7 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-inline-flex gap-2">
+                                    {% if is_manager %}
                                     <a href="{{ url_for('edit_payment', customer_number=customer_num, check_number=p.checkNumber) }}"
                                        class="btn btn-sm btn-outline-warning"
                                        title="Edit Payment">
@@ -434,6 +435,7 @@
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

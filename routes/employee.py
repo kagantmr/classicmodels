@@ -142,6 +142,14 @@ def init_employee_routes(app, database):
             flash("Access denied.", "danger")
             return redirect(url_for("login"))
 
+        employee_number = session.get("user_number")
+        
+        employee_details = db.get_employee_details(employee_number)
+        
+        is_manager = ("Manager" in employee_details['jobTitle']
+                    or "President" in employee_details['jobTitle']
+                    or "VP" in employee_details['jobTitle'])
+
         filters = {
             'status': request.args.getlist('status'),
             'categories': request.args.getlist('category'),
@@ -188,7 +196,8 @@ def init_employee_routes(app, database):
             total_pages=total_pages,
             total_orders=total_orders,
             clean_args=clean_args,
-            search_query=search_query
+            search_query=search_query,
+            is_manager=is_manager
         )
 
     @app.route("/create_report", methods=["POST"])
@@ -257,6 +266,18 @@ def init_employee_routes(app, database):
             flash("Unauthorized access.", "danger")
             return redirect(url_for("index"))
 
+        employee_number = session.get("user_number")
+        
+        employee_details = db.get_employee_details(employee_number)
+        
+        is_manager = ("Manager" in employee_details['jobTitle']
+                    or "President" in employee_details['jobTitle']
+                    or "VP" in employee_details['jobTitle'])
+
+        if not is_manager:
+            flash("Unauthorized access. Only Managers can edit payments.", "danger")
+            return redirect(url_for("employee_view_customer_orders", customer_num=customer_number))
+
         payment = db.get_payment_details(customer_number, check_number)
         if not payment:
             flash("Payment not found.", "danger")
@@ -280,6 +301,18 @@ def init_employee_routes(app, database):
         if session.get("user_type") != "employee":
             flash("Unauthorized access.", "danger")
             return redirect(url_for("index"))
+
+        employee_number = session.get("user_number")
+        
+        employee_details = db.get_employee_details(employee_number)
+        
+        is_manager = ("Manager" in employee_details['jobTitle']
+                    or "President" in employee_details['jobTitle']
+                    or "VP" in employee_details['jobTitle'])
+
+        if not is_manager:
+            flash("Unauthorized access. Only Managers can delete payments.", "danger")
+            return redirect(url_for("employee_view_customer_orders", customer_num=customer_number))
 
         try:
             db.delete_payment(customer_number, check_number)
