@@ -93,7 +93,7 @@
                                     <th class="text-center">Staff / Clients</th>
                                     <th class="text-center">Total Orders</th>
                                     <th class="text-end">Revenue</th>
-                                    <th class="text-end">Avg. Ticket</th>
+                                    <th class="text-end">Avg. Order Value</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -117,15 +117,15 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-3">
-                                            <span title="Employees"><i class="bi bi-people me-1"></i>{{ office.active_employees }}</span>
+                                            <span title="Employees" class="text-white-50"><i class="bi bi-people me-1"></i>{{ office.active_employees }}</span>
                                             <span title="Customers" class="text-info"><i class="bi bi-person-badge me-1"></i>{{ office.customer_count }}</span>
                                         </div>
                                     </td>
-                                    <td class="text-center fw-bold">{{ office.total_orders }}</td>
+                                    <td class="text-center fw-bold text-white-50">{{ office.total_orders }}</td>
                                     <td class="text-end text-success fw-bold font-monospace">
                                         ${{ "{:,.0f}".format(office.total_revenue) }}
                                     </td>
-                                    <td class="text-end text-muted font-monospace small">
+                                    <td class="text-end text-success fw-bold font-monospace" >
                                         ${{ "{:,.0f}".format(office.avg_ticket_size) }}
                                     </td>
                                 </tr>
@@ -140,10 +140,10 @@
         <div class="col-xl-4">
             <div class="stat-card h-100">
                 <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 py-3">
-                    <h5 class="mb-0" style="text-align: center;">Revenue Distribution</h5>
+                    <h5 class="mb-0 text-center">Revenue Distribution</h5>
                 </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 450px; align-items: center; justify-content: center; position: relative;">
-                    <canvas id="salesPieChart" style="max-width: 100%; max-height: 100%;"></canvas>
+                <div class="card-body position-relative align-items-center justify-content-center p-2" style="height: 500px;">
+                    <canvas id="salesPieChart"></canvas>
                 </div>
             </div>
         </div>
@@ -155,7 +155,7 @@
             
             <div class="stat-card">
                 <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 py-3">
-                    <form method="GET" class="row g-3 align-items-center">
+                    <form method="GET" action="{{ url_for('view_office_stats') }}" class="row g-3 align-items-center">
                         <div class="col-md-auto">
                             <label class="text-muted small fw-bold me-2">FILTER BY:</label>
                         </div>
