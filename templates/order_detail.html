@@ -20,11 +20,26 @@
             </div>
         </div>
         <div>
+            {% if session.get('user_type') == 'employee' %}
+            <!-- Employee Status Dropdown -->
+            <form action="{{ url_for('update_status_route', order_number=order.orderNumber) }}" method="POST" class="d-inline-flex align-items-center gap-2">
+                <select name="new_status" class="form-select form-select-sm" style="width: auto; background-color: #1a1d29; border-color: #495057; color: #fff;" onchange="this.form.submit()">
+                    <option value="In Process" {% if order.status == 'In Process' %}selected{% endif %}>In Process</option>
+                    <option value="On Hold" {% if order.status == 'On Hold' %}selected{% endif %}>On Hold</option>
+                    <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                    <option value="Resolved" {% if order.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="Disputed" {% if order.status == 'Disputed' %}selected{% endif %}>Disputed</option>
+                </select>
+            </form>
+            {% else %}
+            <!-- Customer Status Badge -->
             {% if order.status == 'Shipped' %}<span class="badge badge-shipped fs-6 px-3 py-2">Shipped</span>
             {% elif order.status == 'Cancelled' %}<span class="badge badge-cancelled fs-6 px-3 py-2">Cancelled</span>
             {% elif order.status == 'In Process' %}<span class="badge badge-process fs-6 px-3 py-2">In Process</span>
             {% elif order.status == 'On Hold' %}<span class="badge badge-hold fs-6 px-3 py-2">On Hold</span>
             {% else %}<span class="badge badge-default fs-6 px-3 py-2">{{ order.status }}</span>{% endif %}
+            {% endif %}
         </div>
     </div>
 

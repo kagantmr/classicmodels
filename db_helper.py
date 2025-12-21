@@ -840,6 +840,11 @@ class DatabaseHandler:
         query = "UPDATE orders SET comments = %s WHERE orderNumber = %s"
         return self.execute_query(query, (new_comment, order_number))
 
+    def update_order_status(self, order_number, new_status):
+        """Updates the status of a specific order."""
+        query = "UPDATE orders SET status = %s WHERE orderNumber = %s"
+        return self.execute_query(query, (new_status, order_number))
+
     def delete_order_permanently(self, order_number):
         """
         Hard Deletes an order. 

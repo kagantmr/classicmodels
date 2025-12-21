@@ -24,6 +24,26 @@ def init_order_routes(app, database):
         
         return redirect(url_for("employee_view_customer_orders", customer_num=customer_num))
 
+    @app.route("/order/<int:order_number>/update_status", methods=["POST"])
+    def update_status_route(order_number):
+        if session.get("user_type") != "employee":
+            flash("Access denied.", "danger")
+            return redirect(url_for("order_detail", order_number=order_number))
+
+        new_status = request.form.get("new_status", "").strip()
+        
+        # Validate status
+        valid_statuses = ["In Process", "On Hold", "Shipped", "Resolved", "Cancelled", "Disputed"]
+        if new_status not in valid_statuses:
+            flash("Invalid order status.", "danger")
+            return redirect(url_for("order_detail", order_number=order_number))
+
+        db.update_order_status(order_number, new_status)
+
+        flash(f"Order status updated to '{new_status}'.", "success")
+        
+        return redirect(url_for("order_detail", order_number=order_number))
+
     @app.route("/order/<int:order_number>") 
     def order_detail(order_number):
         order = db.get_order(order_number)
