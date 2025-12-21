@@ -16,6 +16,7 @@
     body {
         background-color: var(--bg-dark);
         color: var(--text-light);
+        scroll-behavior: smooth;
     }
 
     /* Modern Card Design */
@@ -151,7 +152,7 @@
 
     <div class="row">
         <div class="col-12">
-            <h4 class="section-title text-white mb-4">Ultimate Product Analysis</h4>
+            <h4 class="section-title text-white mb-4" id="analysis-section">Ultimate Product Analysis</h4>
             
             <div class="stat-card">
                 <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 py-3">
@@ -247,21 +248,21 @@
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item {% if page == 1 %}disabled{% endif %}">
                                 <a class="page-link bg-dark border-secondary text-white" 
-                                   href="{{ url_for('view_office_stats', page=page-1, office=current_office, category=current_category) }}">
+                                   href="{{ url_for('view_office_stats', page=page-1, office=current_office, category=current_category) }}#analysis-section">
                                    Previous
                                 </a>
                             </li>
                             {% for p in range(1, total_pages + 1) %}
                             <li class="page-item {% if p == page %}active{% endif %}">
                                 <a class="page-link {% if p == page %}bg-primary border-primary{% else %}bg-dark border-secondary text-white{% endif %}"
-                                   href="{{ url_for('view_office_stats', page=p, office=current_office, category=current_category) }}">
+                                   href="{{ url_for('view_office_stats', page=p, office=current_office, category=current_category) }}#analysis-section">
                                     {{ p }}
                                 </a>
                             </li>
                             {% endfor %}
                             <li class="page-item {% if page == total_pages %}disabled{% endif %}">
                                 <a class="page-link bg-dark border-secondary text-white" 
-                                   href="{{ url_for('view_office_stats', page=page+1, office=current_office, category=current_category) }}">
+                                   href="{{ url_for('view_office_stats', page=page+1, office=current_office, category=current_category) }}#analysis-section">
                                    Next
                                 </a>
                             </li>
