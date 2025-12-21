@@ -851,6 +851,11 @@ class DatabaseHandler:
         """
         return self.execute_query(query, (limit, offset))
 
+    def update_employee_email(self, employee_number, new_email):
+        """Updates the email address of an employee."""
+        query = "UPDATE employees SET email = %s WHERE employeeNumber = %s"
+        return self.execute_query(query, (new_email, employee_number))
+
     def get_unproductive_employees(self):
         """
         Outer Join (Employees left join Customers left join Orders)
