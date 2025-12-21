@@ -104,6 +104,81 @@ def init_product_routes(app, database):
             vendors=vendors,
             lines=lines,
         )
+    
+    @app.route("/reports/productlines")
+    def report_productlines():
+        # Optional: keep it employee-only
+        if not _require_employee():
+            return redirect(url_for("index"))
+
+        # Optional filters
+        start = request.args.get("start", default="2004-01-01", type=str)
+        end   = request.args.get("end",   default="2005-01-01", type=str)
+        status = request.args.get("status", default="Shipped", type=str)
+
+        sql = """
+        SELECT
+            pl.productLine,
+
+            COALESCE(s.numProducts, 0)        AS numProducts,
+            COALESCE(s.unitsSold, 0)          AS unitsSold,
+            COALESCE(s.revenue, 0)            AS revenue,
+            COALESCE(s.estCOGS, 0)            AS estCOGS,
+            COALESCE(s.estGrossProfit, 0)     AS estGrossProfit,
+            COALESCE(s.estGrossMargin, 0)     AS estGrossMargin,
+            COALESCE(s.distinctCustomers, 0)  AS distinctCustomers
+
+        FROM productlines pl
+
+        LEFT JOIN (
+            SELECT
+                pl2.productLine,
+
+                COUNT(DISTINCT pr.productCode) AS numProducts,
+                SUM(od.quantityOrdered) AS unitsSold,
+                SUM(od.quantityOrdered * od.priceEach) AS revenue,
+                SUM(od.quantityOrdered * pr.buyPrice) AS estCOGS,
+
+                SUM(od.quantityOrdered * od.priceEach) - SUM(od.quantityOrdered * pr.buyPrice) AS estGrossProfit,
+
+                CASE
+                WHEN SUM(od.quantityOrdered * od.priceEach) = 0 THEN 0
+                ELSE
+                    (SUM(od.quantityOrdered * od.priceEach) - SUM(od.quantityOrdered * pr.buyPrice))
+                    / SUM(od.quantityOrdered * od.priceEach)
+                END AS estGrossMargin,
+
+                COUNT(DISTINCT o.customerNumber) AS distinctCustomers
+
+            FROM productlines pl2
+            JOIN products pr
+            ON pr.productLine = pl2.productLine
+            JOIN orderdetails od
+            ON od.productCode = pr.productCode
+            JOIN orders o
+            ON o.orderNumber = od.orderNumber
+
+            WHERE o.status = %s
+            AND o.orderDate >= %s
+            AND o.orderDate <  %s
+
+            GROUP BY pl2.productLine
+        ) s
+        ON s.productLine = pl.productLine
+
+        ORDER BY revenue DESC;
+    """
+
+
+        rows = db.execute_query(sql, (status, start, end))
+
+        return render_template(
+            "report_productlines.html",
+            rows=rows,
+            start=start,
+            end=end,
+            status=status
+        )
 
     # --- Create new product ---
     @app.route("/products/create", methods=["GET", "POST"])

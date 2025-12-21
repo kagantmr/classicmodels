@@ -333,13 +333,18 @@ class DatabaseHandler:
         query = "SELECT * FROM employee_reports WHERE employeeNumber = %s ORDER BY reportDate DESC"
         return self.execute_query(query, (employee_number,))
 
+        return self.execute_query(query, (manager_number,))
+
     def get_subordinate_reports(self, manager_number):
-        """Fetches reports from all employees who report to this manager."""
         query = """
             SELECT r.*, e.firstName, e.lastName, e.jobTitle
             FROM employee_reports r
             JOIN employees e ON r.employeeNumber = e.employeeNumber
-            WHERE e.reportsTo = %s
+            WHERE r.employeeNumber IN (
+                SELECT employeeNumber 
+                FROM employees 
+                WHERE reportsTo = %s
+            )
             ORDER BY r.reportDate DESC
         """
         return self.execute_query(query, (manager_number,))
