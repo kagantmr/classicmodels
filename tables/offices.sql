@@ -16,13 +16,12 @@ CREATE TABLE offices (
   phone         VARCHAR(50)    NOT NULL,
   addressLine1  VARCHAR(50)    NOT NULL,
   addressLine2  VARCHAR(50)    DEFAULT NULL,
-  'state'       VARCHAR(50)    DEFAULT NULL,
+  `state`       VARCHAR(50)    DEFAULT NULL,
   country       VARCHAR(50)    NOT NULL,
   postalCode    VARCHAR(15)    NOT NULL,
   territory     VARCHAR(10)    NOT NULL,
   PRIMARY KEY (officeCode)
-); 
-ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 LOCK TABLES `offices` WRITE;

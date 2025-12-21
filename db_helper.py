@@ -13,6 +13,28 @@ class DatabaseHandler:
         )
         self.cursor = self.db.cursor(dictionary=True)
 
+    def get_or_create_location(self, city, state, postal_code, country):
+        """Finds a locationID or creates one if it doesn't exist."""
+        # Check if exists
+        query_find = """
+            SELECT locationID FROM locations 
+            WHERE city = %s AND COALESCE(state, '') = %s 
+            AND COALESCE(postalCode, '') = %s AND country = %s
+        """
+        params = (city, state or '', postal_code or '', country)
+        result = self.execute_query(query_find, params, fetchone=True)
+        
+        if result:
+            return result['locationID']
+        
+        # Create new if not found
+        query_insert = """
+            INSERT INTO locations (city, state, postalCode, country) 
+            VALUES (%s, %s, %s, %s)
+        """
+        self.execute_query(query_insert, params)
+        return self.cursor.lastrowid
+
     def check_customer_credentials(self, num, password):
         """Validates customerNumber and password. Returns customer data on success, else None."""
         query_hash = "SELECT hashedPassword FROM customer_auth WHERE customerNumber = %s"
@@ -38,16 +60,17 @@ class DatabaseHandler:
     def get_assigned_customers(self, employee_number,search="", sort="none"):
         """Fetches all customers for a specific Sales Rep."""
         
-        query = """
-        SELECT c.customerNumber, c.customerName, c.city, c.country,
-               c.salesRepEmployeeNumber,
-               IFNULL(SUM(p.amount), 0) AS totalSpend
-        FROM customers c
-        LEFT JOIN payments p ON c.customerNumber = p.customerNumber
-        WHERE c.salesRepEmployeeNumber = %s
-          AND c.customerName LIKE %s
-        GROUP BY c.customerNumber
-        """
+        query = query = """
+    SELECT c.customerNumber, c.customerName, l.city, l.country,
+           c.salesRepEmployeeNumber,
+           IFNULL(SUM(p.amount), 0) AS totalSpend
+    FROM customers c
+    JOIN locations l ON c.locationID = l.locationID -- JOIN added here
+    LEFT JOIN payments p ON c.customerNumber = p.customerNumber
+    WHERE c.salesRepEmployeeNumber = %s
+      AND c.customerName LIKE %s
+    GROUP BY c.customerNumber, l.city, l.country -- Group by location fields too
+    """
 
         if sort == "asc":
             query += " ORDER BY totalSpend ASC"
@@ -57,8 +80,12 @@ class DatabaseHandler:
         return self.execute_query(query, (employee_number,  (f"%{search}%")))
     
     def get_customer_details(self, customer_number):
-        """Fetches all details for a single customer."""
-        query = "SELECT * FROM customers WHERE customerNumber = %s"
+        query = """
+            SELECT c.*, l.city, l.state, l.postalCode, l.country 
+            FROM customers c 
+            JOIN locations l ON c.locationID = l.locationID 
+            WHERE c.customerNumber = %s
+        """
         return self.execute_query(query, (customer_number,), fetchone=True)
 
     def get_customer_orders(self, customer_number, sort_by='newest'):
@@ -250,14 +277,12 @@ class DatabaseHandler:
                     ORDER BY RAND()
                     LIMIT 1
                 ) off
-
                 WHERE ord.orderNumber = (
                     SELECT orderNumber
                     FROM orders
                     ORDER BY RAND()
                     LIMIT 1
                 )
-
                 GROUP BY
                     o.city,
                     off.city,
@@ -363,19 +388,21 @@ class DatabaseHandler:
         """
         return self.execute_query(query, (manager_number,))
     
-    def insert_customer(self, customer_info):
-        """
-            insert new customer to customers table
-        """
-
+    def insert_customer(self, customer_info_tuple):
+    # original tuple: (num, name, Lname, Fname, phone, addr1, city, country)
+        num, name, lname, fname, phone, addr1, city, country = customer_info_tuple
+        
+        # 1. Get the ID from the 3NF table
+        loc_id = self.get_or_create_location(city, None, None, country)
+        
+        # 2. Insert into customers using the ID
         query = """
             INSERT INTO customers (
                 customerNumber, customerName, contactLastName, contactFirstName,
-                phone, addressLine1, city, country, creditLimit
-            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,NULL)
-        """
-
-        return self.execute_query(query,customer_info)
+                phone, addressLine1, locationID, creditLimit
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, NULL)
+    """
+        return self.execute_query(query, (num, name, lname, fname, phone, addr1, loc_id))
 
     def insert_customer_to_auth(self, customer_info):
         """
@@ -495,21 +522,20 @@ class DatabaseHandler:
             self.db.autocommit = True
 
     def update_customer_profile(self, customer_number, first_name, last_name, phone, address, city, country):
-        """
-        Updates the profile details of a customer.
-        """
+        # 1. Resolve the location first
+        loc_id = self.get_or_create_location(city, None, None, country)
+        
+        # 2. Update the customer record
         query = """
             UPDATE customers 
             SET contactFirstName = %s, 
                 contactLastName = %s, 
                 phone = %s, 
                 addressLine1 = %s, 
-                city = %s, 
-                country = %s
+                locationID = %s
             WHERE customerNumber = %s
         """
-        # Send datas as a tuples
-        params = (first_name, last_name, phone, address, city, country, customer_number)
+        params = (first_name, last_name, phone, address, loc_id, customer_number)
         return self.execute_query(query, params)
 
     def get_all_offices(self):
