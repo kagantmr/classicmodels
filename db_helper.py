@@ -738,10 +738,11 @@ class DatabaseHandler:
     def get_all_customers_with_balance(self, search="", sort="none"):
         """Fetches all customers for the manager view."""
         query = """
-        SELECT c.customerNumber, c.customerName, c.city, c.country, 
+        SELECT c.customerNumber, c.customerName, l.city, l.country, 
                c.salesRepEmployeeNumber,
                IFNULL(SUM(p.amount), 0) AS totalSpend
         FROM customers c
+        LEFT JOIN locations l ON c.locationID = l.locationID
         LEFT JOIN payments p ON c.customerNumber = p.customerNumber
         WHERE c.customerName LIKE %s
         GROUP BY c.customerNumber
@@ -754,6 +755,10 @@ class DatabaseHandler:
             query += " ORDER BY totalSpend DESC"
             
         customers = self.execute_query(query, (f"%{search}%",))
+        
+        # Handle case where query fails and returns None
+        if customers is None:
+            return []
         
         results = []
         for c in customers:
