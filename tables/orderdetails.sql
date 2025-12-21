@@ -8,6 +8,7 @@ CREATE TABLE `orderdetails` (
     `priceEach`          double      NOT NULL,
     `orderLineNumber`    SMALLINT    NOT NULL,
     PRIMARY KEY (`orderDetailsNumber`),
+    UNIQUE KEY `unique_line_item` (`orderNumber`, `productCode`),
     FOREIGN KEY (`orderNumber`) REFERENCES `orders`(`orderNumber`)
         ON DELETE CASCADE
         ON UPDATE CASCADE,

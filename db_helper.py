@@ -333,8 +333,6 @@ class DatabaseHandler:
         query = "SELECT * FROM employee_reports WHERE employeeNumber = %s ORDER BY reportDate DESC"
         return self.execute_query(query, (employee_number,))
 
-        return self.execute_query(query, (manager_number,))
-
     def get_subordinate_reports(self, manager_number):
         query = """
             SELECT r.*, e.firstName, e.lastName, e.jobTitle
@@ -607,21 +605,76 @@ class DatabaseHandler:
         return self.execute_query(query, (detail_id,), fetchone=True)
 
     def create_payment(self, customer_number, check_number, amount):
-        """Inserts a new payment record for a customer."""
-        # paymentDate is set to the current date/time using NOW()
-        query = "INSERT INTO payments (customerNumber, checkNumber, paymentDate, amount) VALUES (%s, %s, NOW(), %s)"
-        # The parameters match the query placeholders: (customer_number, check_number, amount)
-        return self.execute_query(query, (customer_number, check_number, amount))
+        """Inserts a new payment record for a customer with transaction control."""
+        try:
+            if self.db.is_connected():
+                self.cursor.fetchall()
+            
+            self.db.autocommit = False
+            self.cursor.execute("SAVEPOINT sp_create_payment")
+
+            query = "INSERT INTO payments (customerNumber, checkNumber, paymentDate, amount) VALUES (%s, %s, NOW(), %s)"
+            self.cursor.execute(query, (customer_number, check_number, amount))
+            
+            self.db.commit()
+            return True
+        
+        except mysql.connector.Error as err:
+            self.cursor.execute("ROLLBACK TO SAVEPOINT sp_create_payment")
+            self.db.rollback()
+            print(f"Error creating payment: {err}")
+            return False
+        
+        finally:
+            self.db.autocommit = True
 
     def delete_payment(self, customer_number, check_number):
-        """Deletes a specific payment record."""
-        query = "DELETE FROM payments WHERE customerNumber = %s AND checkNumber = %s"
-        return self.execute_query(query, (customer_number, check_number))
+        """Deletes a specific payment record with transaction control."""
+        try:
+            if self.db.is_connected():
+                self.cursor.fetchall()
+            
+            self.db.autocommit = False
+            self.cursor.execute("SAVEPOINT sp_delete_payment")
+
+            query = "DELETE FROM payments WHERE customerNumber = %s AND checkNumber = %s"
+            self.cursor.execute(query, (customer_number, check_number))
+            
+            self.db.commit()
+            return True
+        
+        except mysql.connector.Error as err:
+            self.cursor.execute("ROLLBACK TO SAVEPOINT sp_delete_payment")
+            self.db.rollback()
+            print(f"Error deleting payment: {err}")
+            return False
+        
+        finally:
+            self.db.autocommit = True
 
     def update_payment_check_number(self, customer_number, old_check_number, new_check_number):
-        """Updates the check number for a payment (e.g., to fix a typo)."""
-        query = "UPDATE payments SET checkNumber = %s WHERE customerNumber = %s AND checkNumber = %s"
-        return self.execute_query(query, (new_check_number, customer_number, old_check_number))
+        """Updates the check number for a payment with transaction control."""
+        try:
+            if self.db.is_connected():
+                self.cursor.fetchall()
+            
+            self.db.autocommit = False
+            self.cursor.execute("SAVEPOINT sp_update_check_number")
+
+            query = "UPDATE payments SET checkNumber = %s WHERE customerNumber = %s AND checkNumber = %s"
+            self.cursor.execute(query, (new_check_number, customer_number, old_check_number))
+            
+            self.db.commit()
+            return True
+        
+        except mysql.connector.Error as err:
+            self.cursor.execute("ROLLBACK TO SAVEPOINT sp_update_check_number")
+            self.db.rollback()
+            print(f"Error updating check number: {err}")
+            return False
+        
+        finally:
+            self.db.autocommit = True
 
     def get_payment_details(self, customer_number, check_number):
         """Fetches a single payment record for editing."""
@@ -629,13 +682,32 @@ class DatabaseHandler:
         return self.execute_query(query, (customer_number, check_number), fetchone=True)
 
     def update_payment(self, customer_number, old_check_number, new_check_number, new_amount):
-        """Updates a payment's check number and amount."""
-        query = """
-            UPDATE payments 
-            SET checkNumber = %s, amount = %s 
-            WHERE customerNumber = %s AND checkNumber = %s
-        """
-        return self.execute_query(query, (new_check_number, new_amount, customer_number, old_check_number))
+        """Updates a payment's check number and amount with transaction control."""
+        try:
+            if self.db.is_connected():
+                self.cursor.fetchall()
+            
+            self.db.autocommit = False
+            self.cursor.execute("SAVEPOINT sp_update_payment")
+
+            query = """
+                UPDATE payments 
+                SET checkNumber = %s, amount = %s 
+                WHERE customerNumber = %s AND checkNumber = %s
+            """
+            self.cursor.execute(query, (new_check_number, new_amount, customer_number, old_check_number))
+            
+            self.db.commit()
+            return True
+        
+        except mysql.connector.Error as err:
+            self.cursor.execute("ROLLBACK TO SAVEPOINT sp_update_payment")
+            self.db.rollback()
+            print(f"Error updating payment: {err}")
+            return False
+        
+        finally:
+            self.db.autocommit = True
 
     def get_all_customers_with_balance(self, search="", sort="none"):
         """Fetches all customers for the manager view."""
