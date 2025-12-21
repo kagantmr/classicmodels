@@ -1,23 +1,29 @@
-DROP TABLE IF EXISTS `offices`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `offices` (
-  `officeCode` varchar(10) NOT NULL,
-  `city` varchar(50) NOT NULL,
-  `phone` varchar(50) NOT NULL,
-  `addressLine1` varchar(50) NOT NULL,
-  `addressLine2` varchar(50) DEFAULT NULL,
-  `state` varchar(50) DEFAULT NULL,
-  `country` varchar(50) NOT NULL,
-  `postalCode` varchar(15) NOT NULL,
-  `territory` varchar(10) NOT NULL,
-  PRIMARY KEY (`officeCode`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS offices;
 
---
--- Dumping data for table `offices`
---
+-- Unnormalized Version (Violates 1NF)
+-- CREATE TABLE offices (
+--    officeCode      VARCHAR(10)    NOT NULL,
+--    phone           VARCHAR(50)    NOT NULL,
+--    full_address    VARCHAR(255)   NOT NULL,  -- e.g. "100 Market St, CA, USA, 94080"
+--    territory       VARCHAR(10)    NOT NULL,
+--    PRIMARY KEY (officeCode)
+-- );
+
+-- Normalized (3NF)
+CREATE TABLE offices (
+  officeCode    VARCHAR(10)    NOT NULL,
+  city          VARCHAR(50)    NOT NULL,
+  phone         VARCHAR(50)    NOT NULL,
+  addressLine1  VARCHAR(50)    NOT NULL,
+  addressLine2  VARCHAR(50)    DEFAULT NULL,
+  'state'       VARCHAR(50)    DEFAULT NULL,
+  country       VARCHAR(50)    NOT NULL,
+  postalCode    VARCHAR(15)    NOT NULL,
+  territory     VARCHAR(10)    NOT NULL,
+  PRIMARY KEY (officeCode)
+); 
+ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 LOCK TABLES `offices` WRITE;
 /*!40000 ALTER TABLE `offices` DISABLE KEYS */;

@@ -244,21 +244,58 @@ def init_employee_routes(app, database):
             return redirect(url_for("login"))
         return render_template("register.html")
 
-    @app.route("/office/statistics")
-    def office_statistics():
+    # routes/offices.py içine:
+
+    @app.route("/offices/stats")
+    def view_office_stats():
         if session.get("user_type") != "employee":
-            return redirect(url_for("login"))
+            flash("Access denied.", "danger")
+            return redirect(url_for("index"))
 
+        # 1. Fetch Consolidated Top Stats (Pie Chart & Top Table)
+        consolidated_stats = db.get_consolidated_office_stats()
 
-        order_stats = db.get_office_order_stats()
-        activity_stats = db.get_offices_activity_report()
+        # 2. Setup Pagination & Filters for Ultimate Table
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        offset = (page - 1) * per_page
 
-        grand_total_sales = sum(item['total_sales'] for item in order_stats) if order_stats else 0
+        filter_office = request.args.get('office', 'All')
+        filter_category = request.args.get('category', 'All')
 
-        return render_template("office_stats.html", 
-                               order_stats=order_stats, 
-                               activity_stats=activity_stats,
-                               grand_total_sales=grand_total_sales)
+        # 3. Fetch Ultimate Data
+        ultimate_data = db.get_ultimate_analysis_paginated(
+            limit=per_page, 
+            offset=offset, 
+            filter_office=filter_office, 
+            filter_category=filter_category
+        )
+        
+        total_rows = db.get_ultimate_analysis_count(filter_office, filter_category)
+        total_pages = math.ceil(total_rows / per_page)
+
+        # 4. Filter Options (Populating dropdowns)
+        # Extract unique cities from consolidated stats for the dropdown
+        unique_offices = sorted([row['city'] for row in consolidated_stats])
+        # Fetch categories strictly for dropdown
+        unique_categories = [r['productLine'] for r in db.execute_query("SELECT productLine FROM productlines")]
+
+        return render_template(
+            "office_stats.html",
+            # Top Section Data
+            office_stats=consolidated_stats, 
+            
+            # Bottom Section Data
+            ultimate_data=ultimate_data,
+            
+            # Pagination & Filters
+            page=page,
+            total_pages=total_pages,
+            current_office=filter_office,
+            current_category=filter_category,
+            unique_offices=unique_offices,
+            unique_categories=unique_categories
+        )
 
     @app.route("/payments/<int:customer_number>/<string:check_number>/edit", methods=["GET", "POST"])
     def edit_payment(customer_number, check_number):

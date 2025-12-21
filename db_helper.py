@@ -682,79 +682,6 @@ class DatabaseHandler:
         params = (employee_number, last_name, first_name, extension, email, office_code, reports_to, job_title)
         return self.execute_query(query, params)
 
-    def get_office_order_stats(self):
-        """
-        Retreives stats per office including Total Sales Volume using a NESTED QUERY.
-        Structure: Office -> Employees -> Customers -> Orders -> OrderDetails
-        """
-        query = """
-            SELECT 
-                o.officeCode,
-                o.city,
-                o.country,
-                (SELECT COUNT(*) 
-                 FROM orders ord
-                 JOIN customers c ON ord.customerNumber = c.customerNumber
-                 JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
-                 WHERE e.officeCode = o.officeCode
-                ) as total_orders,
-                
-                (SELECT MAX(ord.orderDate)
-                 FROM orders ord
-                 JOIN customers c ON ord.customerNumber = c.customerNumber
-                 JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
-                 WHERE e.officeCode = o.officeCode
-                ) as last_activity,
-
-                COALESCE(
-                    (SELECT SUM(od.quantityOrdered * od.priceEach)
-                     FROM orderdetails od
-                     JOIN orders ord ON od.orderNumber = ord.orderNumber
-                     JOIN customers c ON ord.customerNumber = c.customerNumber
-                     JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
-                     WHERE e.officeCode = o.officeCode
-                    ), 0
-                ) as total_sales
-            FROM offices o
-            ORDER BY total_sales DESC
-        """
-        return self.execute_query(query)
-
-    def get_offices_activity_report(self):
-        """
-        Retrieves workforce activity.
-        Fixes: Fetches Territory, Active Counts, and Manager Names correctly using Subqueries.
-        """
-        query = """
-            SELECT 
-                o.city,
-                o.territory, -- Territory verisini buradan çekiyoruz
-                
-                (SELECT COUNT(*) 
-                 FROM employees e 
-                 WHERE e.officeCode = o.officeCode
-                ) as active_employees,
-
-                (SELECT COUNT(*)
-                 FROM customers c
-                 JOIN employees e ON c.salesRepEmployeeNumber = e.employeeNumber
-                 WHERE e.officeCode = o.officeCode
-                ) as customer_count,
-
-                COALESCE(
-                    (SELECT CONCAT(firstName, ' ', lastName)
-                     FROM employees e
-                     WHERE e.officeCode = o.officeCode 
-                     AND (jobTitle LIKE '%Manager%' OR jobTitle LIKE '%VP%' OR jobTitle LIKE '%President%')
-                     LIMIT 1
-                    ), 'Regional Lead'
-                ) as managers
-                
-            FROM offices o
-            ORDER BY active_employees DESC
-        """
-        return self.execute_query(query)
-
     def create_order_transaction(self, customer_number, cart_items, comment=""):
         """
         Creates an order and its details atomically.
@@ -1021,5 +948,148 @@ class DatabaseHandler:
             GROUP BY o.city, e.employeeNumber, sales_rep
             ORDER BY office_city, rep_revenue DESC;
         """
-
         return self.execute_query(query)
+
+    def get_consolidated_office_stats(self):
+        """
+        MERGED & COMPLEX QUERY:
+        Combines Activity Report + Order Stats into one master query.
+        Features: Multi-Join (5 Tables), Left Joins, Count Distinct, Nested Subquery for Manager.
+        """
+        query = """
+            SELECT 
+                o.officeCode,
+                o.city,
+                o.country,
+                o.territory,
+                COUNT(DISTINCT e.employeeNumber) as active_employees,
+                COUNT(DISTINCT c.customerNumber) as customer_count,
+                COUNT(DISTINCT ord.orderNumber) as total_orders,
+                COALESCE(SUM(od.quantityOrdered * od.priceEach), 0) as total_revenue,
+
+                COALESCE(
+                    (SELECT CONCAT(m.firstName, ' ', m.lastName)
+                     FROM employees m 
+                     WHERE m.officeCode = o.officeCode 
+                     AND (m.jobTitle LIKE '%Manager%' OR m.jobTitle LIKE '%VP%' OR m.jobTitle LIKE '%President%')
+                     LIMIT 1
+                    ), 'Regional Lead'
+                ) as manager_name,
+
+                CASE 
+                    WHEN COUNT(DISTINCT ord.orderNumber) > 0 
+                    THEN COALESCE(SUM(od.quantityOrdered * od.priceEach), 0) / COUNT(DISTINCT ord.orderNumber)
+                    ELSE 0 
+                END as avg_ticket_size
+
+            FROM offices o
+            LEFT JOIN employees e 
+                ON o.officeCode = e.officeCode
+            LEFT JOIN customers c 
+                ON e.employeeNumber = c.salesRepEmployeeNumber
+            LEFT JOIN orders ord 
+                ON c.customerNumber = ord.customerNumber
+            LEFT JOIN orderdetails od 
+                ON ord.orderNumber = od.orderNumber
+                
+            GROUP BY o.officeCode, o.city, o.country, o.territory
+            ORDER BY total_revenue DESC;
+        """
+        return self.execute_query(query)
+
+    def get_ultimate_analysis_paginated(self, limit=10, offset=0, filter_office=None, filter_category=None):
+        """
+        THE ULTIMATE QUERY (PAGINATED & FILTERED):
+        Analyzes Office performance per Product Category vs Global Averages.
+        Includes 7-Table Joins, Nested Subqueries, and Dynamic Filtering.
+        """
+        # Dynamic WHERE clause construction
+        where_clauses = ["pl.productLine IS NOT NULL"]
+        params = []
+
+        if filter_office and filter_office != 'All':
+            where_clauses.append("o.city = %s")
+            params.append(filter_office)
+        
+        if filter_category and filter_category != 'All':
+            where_clauses.append("pl.productLine = %s")
+            params.append(filter_category)
+
+        where_sql = " AND ".join(where_clauses)
+
+        query = f"""
+            SELECT 
+                o.city AS Office,
+                o.territory AS Region,
+                pl.productLine AS Category,
+                
+                COUNT(DISTINCT ord.orderNumber) AS Order_Count,
+                COALESCE(SUM(od.quantityOrdered * od.priceEach), 0) AS Total_Revenue,
+
+                -- COMPLEX NESTED SUBQUERY: Global Average Calculation
+                (
+                    SELECT AVG(sub_sum)
+                    FROM (
+                        SELECT SUM(od2.quantityOrdered * od2.priceEach) as sub_sum
+                        FROM orderdetails od2
+                        JOIN products p2 ON od2.productCode = p2.productCode
+                        WHERE p2.productLine = pl.productLine -- Correlated Reference
+                        GROUP BY od2.orderNumber
+                    ) AS global_stats
+                ) AS Global_Category_Avg
+
+            FROM offices o
+            JOIN employees e 
+                ON o.officeCode = e.officeCode
+            LEFT JOIN customers c 
+                ON e.employeeNumber = c.salesRepEmployeeNumber
+            LEFT JOIN orders ord 
+                ON c.customerNumber = ord.customerNumber
+            LEFT JOIN orderdetails od 
+                ON ord.orderNumber = od.orderNumber
+            LEFT JOIN products p 
+                ON od.productCode = p.productCode
+            LEFT JOIN productlines pl 
+                ON p.productLine = pl.productLine
+            
+            WHERE {where_sql}
+            
+            GROUP BY o.officeCode, pl.productLine
+            ORDER BY o.city, Total_Revenue DESC
+            LIMIT %s OFFSET %s
+        """
+        # Add pagination params
+        params.extend([limit, offset])
+        
+        return self.execute_query(query, tuple(params))
+
+    def get_ultimate_analysis_count(self, filter_office=None, filter_category=None):
+        """Helper to get total row count for pagination."""
+        where_clauses = ["pl.productLine IS NOT NULL"]
+        params = []
+        if filter_office and filter_office != 'All':
+            where_clauses.append("o.city = %s")
+            params.append(filter_office)
+        if filter_category and filter_category != 'All':
+            where_clauses.append("pl.productLine = %s")
+            params.append(filter_category)
+        
+        where_sql = " AND ".join(where_clauses)
+        
+        query = f"""
+            SELECT COUNT(*) as total
+            FROM (
+                SELECT o.officeCode
+                FROM offices o
+                JOIN employees e ON o.officeCode = e.officeCode
+                LEFT JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+                LEFT JOIN orders ord ON c.customerNumber = ord.customerNumber
+                LEFT JOIN orderdetails od ON ord.orderNumber = od.orderNumber
+                LEFT JOIN products p ON od.productCode = p.productCode
+                LEFT JOIN productlines pl ON p.productLine = pl.productLine
+                WHERE {where_sql}
+                GROUP BY o.officeCode, pl.productLine
+            ) as count_table
+        """
+        result = self.execute_query(query, tuple(params), fetchone=True)
+        return result['total'] if result else 0

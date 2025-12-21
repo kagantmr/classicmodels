@@ -245,7 +245,7 @@
                 {% set job = session.get('job_title', '') %}
                 {% if 'Manager' in job or 'President' in job or 'VP' in job %}
                     <li>
-                      <a class="dropdown-item" href="{{ url_for('office_statistics') }}">
+                      <a class="dropdown-item" href="{{ url_for('view_office_stats') }}">
                         Office Statistics
                       </a>
                     </li>
