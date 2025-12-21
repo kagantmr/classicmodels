@@ -16,9 +16,9 @@ CREATE TABLE `employees` (
   PRIMARY KEY (`employeeNumber`),
   KEY `reportsTo` (`reportsTo`),
   CONSTRAINT `fk_employees_reports_to` 
-  FOREIGN KEY (`reportsTo`) REFERENCES `employees` (`employeeNumber`),
+  FOREIGN KEY (`reportsTo`) REFERENCES `employees` (`employeeNumber`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_employees_office` 
-  FOREIGN KEY (`officeCode`) REFERENCES `offices` (`officeCode`)
+  FOREIGN KEY (`officeCode`) REFERENCES `offices` (`officeCode`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
