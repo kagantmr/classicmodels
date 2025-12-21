@@ -231,7 +231,7 @@ class DatabaseHandler:
                     FROM orders o
                     JOIN orderdetails od ON o.orderNumber = od.orderNumber
                     WHERE o.customerNumber = %s
-                    AND o.status != 'Cancelled'
+                    AND o.status = 'Shipped'
                 ), 0) AS total_orders,
                 IFNULL((
                     SELECT SUM(amount)
