@@ -86,9 +86,20 @@
 </div>
 
 <div class="row">
+  {% set product_line_images = {
+    'Classic Cars': 'car.jpg',
+    'Motorcycles': 'motorcycle.jpg',
+    'Planes': 'plane.jpg',
+    'Ships': 'boat.jpg',
+    'Trains': 'train.jpg',
+    'Trucks and Buses': 'truck.jpg',
+    'Vintage Cars': 'vintage_car.jpg'
+  } %}
   {% for product in products %}
   <div class="col-md-4 mb-4">
     <div class="card h-100 product-card-dark">
+      {% set image_file = product_line_images.get(product.productLine, 'car.jpg') %}
+      <img src="{{ url_for('static', filename='images/' ~ image_file) }}" class="card-img-top" alt="{{ product.productName }}" style="height: 200px; object-fit: cover;">
       <div class="card-body" role="button" onclick="window.location.href='/product/{{ product.productCode }}'">
         <h5 class="card-title">{{ product.productName }}</h5>
         <p class="card-text">Scale: {{ product.productScale }}</p>

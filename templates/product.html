@@ -82,9 +82,19 @@
 <div class="container mt-4">
   <div class="row">
     <div class="col-md-6">
-      <!-- Placeholder image, you can later store image URLs in DB -->
+      <!-- Product line image -->
       <div class="border product-image-box rounded p-3 text-center">
-        <img src="https://via.placeholder.com/400x300?text={{ product.productName | urlencode }}"
+        {% set product_line_images = {
+          'Classic Cars': 'car.jpg',
+          'Motorcycles': 'motorcycle.jpg',
+          'Planes': 'plane.jpg',
+          'Ships': 'boat.jpg',
+          'Trains': 'train.jpg',
+          'Trucks and Buses': 'truck.jpg',
+          'Vintage Cars': 'vintage_car.jpg'
+        } %}
+        {% set image_file = product_line_images.get(product.productLine, 'car.jpg') %}
+        <img src="{{ url_for('static', filename='images/' ~ image_file) }}"
           alt="{{ product.productName }}" class="img-fluid">
       </div>
     </div>
