@@ -1058,11 +1058,11 @@ class DatabaseHandler:
                     ), 'Regional Lead'
                 ) as manager_name,
 
-                CASE 
-                    WHEN COUNT(DISTINCT ord.orderNumber) > 0 
-                    THEN COALESCE(SUM(od.quantityOrdered * od.priceEach), 0) / COUNT(DISTINCT ord.orderNumber)
-                    ELSE 0 
-                END as avg_ticket_size
+            CASE 
+                WHEN COUNT(DISTINCT ord.orderNumber) > 0 
+                THEN CAST(COALESCE(SUM(od.quantityOrdered * od.priceEach), 0) AS DECIMAL(10,2)) / COUNT(DISTINCT ord.orderNumber)
+                ELSE 0.00
+            END as avg_ticket_size
 
             FROM offices o
             LEFT JOIN employees e 
