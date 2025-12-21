@@ -138,3 +138,22 @@ def init_auth_routes(app, database):
             )
 
         return render_template("account_settings.html", user=user, user_type=user_type)
+
+    @app.route("/account/update_email", methods=["POST"])
+    def update_employee_email():
+        if "user_type" not in session or session["user_type"] != "employee":
+            flash("Unauthorized access.", "danger")
+            return redirect(url_for("login"))
+
+        new_email = request.form.get("email")
+        if not new_email:
+            flash("Email cannot be empty.", "danger")
+            return redirect(url_for("account_settings"))
+
+        try:
+            db.update_employee_email(session["user_number"], new_email)
+            flash("Email updated successfully.", "success")
+        except Exception as e:
+            flash(f"Error updating email: {e}", "danger")
+
+        return redirect(url_for("account_settings"))
