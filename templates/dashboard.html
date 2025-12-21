@@ -68,7 +68,7 @@
                         <span class="badge bg-primary rounded-pill mb-1">ID: {{ customer.customerNumber }}</span><br>
 
                         {% if customer.balance is defined %}
-                        {% if customer.balance > 0 %}
+                        {% if customer.balance >= 0.01 %}
                         <span class="badge bg-danger">Debt: ${{ "%.2f"|format(customer.balance) }}</span>
                         {% else %}
                         <span class="badge bg-success">No Debt</span>
